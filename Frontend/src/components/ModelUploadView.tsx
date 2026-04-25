@@ -273,6 +273,19 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
                       </div>
                     </div>
 
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">PIN Code <span className="text-primary">*</span></label>
+                      <input 
+                        type="text" 
+                        required 
+                        maxLength={6}
+                        pattern="[0-9]{6}"
+                        placeholder="400001" 
+                        className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors" 
+                        onInput={(e: any) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
+                      />
+                    </div>
+
                     <button 
                       type="submit"
                       className="w-full mt-4 bg-gradient-to-r from-primary to-orange-600 text-white font-bold py-5 rounded-2xl shadow-xl shadow-primary/20 hover:from-orange-600 hover:to-orange-500 transition-all active:scale-95"

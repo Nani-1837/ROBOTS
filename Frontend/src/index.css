@@ -41,7 +41,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
 }
 
-/* Hide default cursor on interactive elements */
+/* Restore default cursor on interactive elements */
 a, button, input, select, textarea, .cursor-pointer {
-  cursor: none !important;
+  cursor: pointer !important;
 }

@@ -2,7 +2,19 @@ import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import herosectionImage from '../assets/herosection.png';
 
-export default function Hero() {
+export default function Hero({ setCurrentView, setActiveCategory }: { setCurrentView: any, setActiveCategory: any }) {
+
+  const scrollToAbout = () => {
+    const element = document.getElementById('about');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const exploreAll = () => {
+    setActiveCategory('All Products');
+    setCurrentView('category');
+  };
 
   return (
     <section className="relative min-h-screen pt-24 pb-10 flex flex-col items-center justify-start overflow-hidden">
@@ -19,8 +31,21 @@ export default function Hero() {
       </div>
 
       {/* Background glow effects */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none z-0" />
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none z-0" />
+      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[140px] pointer-events-none z-0 animate-pulse" />
+      <div className="absolute top-1/3 right-1/4 translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-blue-500/10 rounded-full blur-[140px] pointer-events-none z-0" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-gradient-to-t from-primary/5 to-transparent pointer-events-none z-0" />
+
+      {/* Side Blinks */}
+      <motion.div 
+        animate={{ opacity: [0.2, 1, 0.2], scale: [1, 1.2, 1] }}
+        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+        className="absolute left-10 top-1/2 -translate-y-1/2 w-1 h-32 bg-gradient-to-b from-transparent via-primary to-transparent blur-[2px] hidden lg:block"
+      />
+      <motion.div 
+        animate={{ opacity: [0.2, 1, 0.2], scale: [1, 1.2, 1] }}
+        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut", delay: 1 }}
+        className="absolute right-10 top-1/2 -translate-y-1/2 w-1 h-32 bg-gradient-to-b from-transparent via-primary to-transparent blur-[2px] hidden lg:block"
+      />
 
       {/* Content Container */}
       <div className="relative z-20 w-full max-w-7xl mx-auto px-6 text-center mt-4">
@@ -30,7 +55,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="font-sans text-4xl sm:text-6xl md:text-[5.5rem] font-bold tracking-tight leading-[1.1] mb-6 text-[var(--text-main)]"
+          className="font-sans text-4xl sm:text-6xl md:text-[5.5rem] font-black tracking-tight leading-[1.1] mb-6 text-[var(--text-main)] font-display tracking-tighter"
         >
           Next-Gen Robotics Ecosystem <br />
           <span className="text-primary">
@@ -55,11 +80,17 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-6"
         >
-          <button className="w-full sm:w-auto px-6 py-3 rounded-full bg-[var(--text-main)]/5 hover:bg-[var(--text-main)]/10 text-[var(--text-main)] font-medium text-sm sm:text-base transition-colors flex items-center justify-center cursor-none border border-[var(--text-main)]/10">
+          <button 
+            onClick={scrollToAbout}
+            className="w-full sm:w-auto px-6 py-3 rounded-full bg-[var(--text-main)]/5 hover:bg-[var(--text-main)]/10 text-[var(--text-main)] font-medium text-sm sm:text-base transition-colors flex items-center justify-center cursor-none border border-[var(--text-main)]/10"
+          >
             Watch Video
           </button>
           
-          <button className="w-full sm:w-auto px-6 py-3 rounded-full bg-gradient-to-r from-primary to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-medium text-sm sm:text-base transition-colors shadow-[0_4px_14px_0_rgba(255,106,0,0.39)] flex items-center justify-center gap-2 cursor-none">
+          <button 
+            onClick={exploreAll}
+            className="w-full sm:w-auto px-6 py-3 rounded-full bg-gradient-to-r from-primary to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-medium text-sm sm:text-base transition-colors shadow-[0_4px_14px_0_rgba(255,106,0,0.39)] flex items-center justify-center gap-2 cursor-none"
+          >
             Explore Collection
             <ArrowRight size={18} />
           </button>

@@ -1,19 +1,19 @@
 import { motion } from 'framer-motion';
-import { ShoppingCart, Star } from 'lucide-react';
-import prodDrone from '../assets/prod_drone.png';
-import prodCar from '../assets/prod_car.png';
-import prodMotor from '../assets/prod_motor.png';
-import prodKit from '../assets/prod_kit.png';
+import { ChevronRight, GraduationCap, ShoppingCart, Star } from 'lucide-react';
 
-const ProductCard = ({ image, name, category, price, delay, setCartItems }) => {
+interface CollegeProjectsViewProps {
+  onBack: () => void;
+  setCartItems: (items: any) => void;
+}
+
+const ProjectCard = ({ image, name, category, price, delay, setCartItems }) => {
   const addToCart = () => {
     setCartItems((prev: any) => {
       const existing = prev.find((item: any) => item.name === name);
       if (existing) {
         return prev.map((item: any) => item.name === name ? { ...item, qty: item.qty + 1 } : item);
       }
-      const numericPrice = parseFloat(price.replace(/,/g, ''));
-      return [...prev, { name, price: numericPrice, qty: 1, image }];
+      return [...prev, { name, price, qty: 1, image }];
     });
   };
 
@@ -25,21 +25,18 @@ const ProductCard = ({ image, name, category, price, delay, setCartItems }) => {
       transition={{ delay, duration: 0.5 }}
       className="bg-[var(--bg-primary)] rounded-[2rem] border border-[var(--border-subtle)] overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-2xl transition-all duration-500 group flex flex-col"
     >
-      {/* Image Section - 1920x1080 Aspect Ratio */}
       <div className="relative aspect-[1920/1080] bg-[var(--bg-secondary)]/30 overflow-hidden flex items-center justify-center">
         <img 
           src={image} 
           alt={name} 
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        {/* Floating Level Badge */}
         <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md px-3 py-1 rounded-full border border-primary/10 flex items-center gap-1">
           <Star size={10} className="text-orange-500 fill-orange-500" />
-          <p className="text-[8px] font-black text-primary uppercase tracking-tighter">Bestseller</p>
+          <p className="text-[8px] font-black text-primary uppercase tracking-tighter">Academic Grade</p>
         </div>
       </div>
 
-      {/* Content Section */}
       <div className="p-5 sm:p-6 flex-1 flex flex-col space-y-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-3">
@@ -56,13 +53,13 @@ const ProductCard = ({ image, name, category, price, delay, setCartItems }) => {
 
         <div className="space-y-4">
           <div className="flex items-end gap-3">
-            <span className="text-2xl font-black text-[var(--text-main)] font-display tracking-tight">₹{price}</span>
-            <span className="text-[var(--text-muted)] line-through text-xs font-medium mb-1">₹{(parseFloat(price.replace(/,/g, '')) * 1.4).toFixed(0)}</span>
+            <span className="text-2xl font-black text-[var(--text-main)] font-display tracking-tight">₹{price.toLocaleString()}</span>
+            <span className="text-[var(--text-muted)] line-through text-xs font-medium mb-1">₹{(price * 1.4).toFixed(0)}</span>
           </div>
 
           <div className="flex gap-3 pt-2">
             <button className="flex-1 py-3.5 rounded-2xl bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] font-bold text-xs transition-all active:scale-95">
-              Explore
+              Guide
             </button>
             <button 
               onClick={addToCart}
@@ -77,57 +74,72 @@ const ProductCard = ({ image, name, category, price, delay, setCartItems }) => {
   );
 };
 
-export default function ProductGrid({ setCartItems, setActiveCategory }) {
-  const products = [
-    { image: prodDrone, name: 'Swift-Blade Z1', category: 'Racing Drone', price: '899' },
-    { image: prodCar, name: 'Titan-Rover X', category: 'All-Terrain', price: '1249' },
-    { image: prodMotor, name: 'Vortex Core M1', category: 'Propulsion', price: '299' },
-    { image: prodKit, name: 'Bison-Part Kit', category: 'Customization', price: '149' },
+export default function CollegeProjectsView({ onBack, setCartItems }: CollegeProjectsViewProps) {
+  const projects = [
+    {
+      name: "Spider-Bot Chassis Kit",
+      price: 15999,
+      category: "Bionic Research",
+      image: "https://images.unsplash.com/photo-1535378917042-10a22c95931a?auto=format&fit=crop&q=80&w=1920&h=1080"
+    },
+    {
+      name: "Neural Swarm Core",
+      price: 8499,
+      category: "AI Control",
+      image: "https://images.unsplash.com/photo-1581092334651-ddf26d9a1930?auto=format&fit=crop&q=80&w=1920&h=1080"
+    },
+    {
+      name: "Omni-Drive Platform",
+      price: 12999,
+      category: "Mobile Robotics",
+      image: "https://images.unsplash.com/photo-1531693251400-38df35776dc7?auto=format&fit=crop&q=80&w=1920&h=1080"
+    },
+    {
+      name: "Hydra-Link Arm",
+      price: 24999,
+      category: "Manipulation",
+      image: "https://images.unsplash.com/photo-1558444479-2706fa58b8c6?auto=format&fit=crop&q=80&w=1920&h=1080"
+    }
   ];
 
   return (
-    <section className="relative w-full bg-[var(--bg-primary)] py-32 px-6 transition-colors duration-400">
+    <motion.div 
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      className="min-h-screen bg-[var(--bg-primary)] pt-32 pb-20 px-4 sm:px-8 transition-colors duration-400"
+    >
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-20">
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-6xl font-bold font-display text-[var(--text-main)] mb-6"
-          >
-            The <span className="text-primary italic">Bisonix</span> Collection
-          </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-[var(--text-muted)] max-w-xl mx-auto text-lg"
-          >
-            Explore our curated selection of high-performance robotics and precision-engineered modules. Built for speed, durability, and total control.
-          </motion.p>
+        <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm mb-12">
+          <button onClick={onBack} className="hover:text-primary transition-colors flex items-center gap-1">
+            Home
+          </button>
+          <ChevronRight size={12} />
+          <span className="text-[var(--text-main)] font-bold">College Projects</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product, i) => (
-            <ProductCard 
+        <div className="mb-16">
+          <h1 className="text-4xl md:text-7xl font-black font-display text-[var(--text-main)] mb-6 leading-[0.9] tracking-tighter">
+            College <span className="text-primary italic">Projects</span> Support.
+          </h1>
+          <p className="text-[var(--text-muted)] max-w-2xl text-lg">
+            High-performance hardware kits designed specifically for engineering students and research labs.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {projects.map((project, i) => (
+            <ProjectCard 
               key={i} 
-              {...product} 
+              {...project} 
               delay={i * 0.1} 
               setCartItems={setCartItems}
             />
           ))}
         </div>
 
-        <div className="mt-20 text-center">
-          <motion.button 
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            onClick={() => setActiveCategory('Robo Toys')}
-            className="px-12 py-5 rounded-2xl border border-[var(--border-subtle)] text-[var(--text-main)] font-bold hover:bg-primary hover:text-white hover:border-primary transition-all duration-300"
-          >
-            Browse Full Collection
-          </motion.button>
-        </div>
+        
       </div>
-    </section>
+    </motion.div>
   );
 }

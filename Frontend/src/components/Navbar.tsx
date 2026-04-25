@@ -6,7 +6,7 @@ import AuthModal from './AuthModal';
 import CartDrawer from './CartDrawer';
 import SearchOverlay from './SearchOverlay';
 
-export default function Navbar({ cartItems, setCartItems, setActiveCategory }) {
+export default function Navbar({ cartItems, setCartItems, setActiveCategory, setCurrentView }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -49,6 +49,8 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory }) {
     { name: 'RC Cars', href: '#' },
     { name: '3D Models', href: '#' },
     { name: 'Services', href: '#', hasDropdown: true },
+    { name: 'Track Order', href: '#' },
+    { name: 'Contact Us', href: '#' },
   ];
 
   const megaMenuContent = {
@@ -109,9 +111,16 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory }) {
                 onMouseEnter={() => setHoveredLink(item.name)}
                 onMouseLeave={() => setHoveredLink(null)}
                 onClick={() => {
-                  if (item.name !== 'Services') {
+                  if (item.name === 'Contact Us') {
+                    setCurrentView('contact');
+                    setActiveItem('Contact Us');
+                  } else if (item.name === 'Track Order') {
+                    setCurrentView('track-order');
+                    setActiveItem('Track Order');
+                  } else if (item.name !== 'Services') {
                     setActiveCategory(item.name);
                     setActiveItem(item.name);
+                    setCurrentView('category');
                   }
                 }}
                 className="relative px-4 py-6 cursor-pointer group flex items-center gap-1"
@@ -131,10 +140,19 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory }) {
                     >
                       <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-3xl shadow-2xl overflow-hidden flex min-w-[700px] backdrop-blur-xl mt-2">
                         <div className="w-56 bg-[var(--bg-secondary)]/50 p-8 border-r border-[var(--border-subtle)] space-y-6">
-                          <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-4">Explore Series</p>
-                          {['New Arrivals', 'Best Sellers', 'Custom Pro', 'Accessories'].map(link => (
-                            <div key={link} className="text-xs font-bold text-[var(--text-main)] hover:text-primary transition-colors cursor-pointer flex justify-between items-center group/link">
-                              {link}
+                          <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-4">Resources</p>
+                          {[
+                            { name: 'Comparison Tool', view: 'compare' },
+                            { name: 'Track Order', view: 'track-order' },
+                            { name: 'New Arrivals', view: 'category' },
+                            { name: 'Best Sellers', view: 'category' }
+                          ].map(link => (
+                            <div 
+                              key={link.name} 
+                              onClick={() => { setCurrentView(link.view); setHoveredLink(null); }}
+                              className="text-xs font-bold text-[var(--text-main)] hover:text-primary transition-colors cursor-pointer flex justify-between items-center group/link"
+                            >
+                              {link.name}
                               <ChevronRight size={12} className="opacity-0 group-hover/link:opacity-100 transition-opacity" />
                             </div>
                           ))}
@@ -157,14 +175,26 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory }) {
                               </div>
                             ))}
                             {item.name === 'Services' && (
-                              <div className="col-span-3 space-y-6">
-                                <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-colors">
-                                  <p className="text-sm font-bold text-[var(--text-main)] mb-1">College Projects</p>
-                                  <p className="text-[10px] text-[var(--text-muted)]">Custom robotics support and components for engineering students.</p>
+                              <div className="col-span-3 grid grid-cols-2 gap-4">
+                                <div 
+                                  onClick={() => { setCurrentView('college-projects'); setHoveredLink(null); }}
+                                  className="p-8 rounded-[2rem] bg-orange-500/5 border border-orange-500/10 hover:bg-orange-500/10 transition-all cursor-pointer group/card flex flex-col justify-center text-center"
+                                >
+                                  <div className="flex justify-center items-center gap-2 mb-2">
+                                    <p className="text-base font-bold text-[var(--text-main)] font-display">College Projects</p>
+                                    <ChevronRight size={16} className="text-primary opacity-0 group-hover/card:opacity-100 transition-all group-hover/card:translate-x-1" />
+                                  </div>
+                                  <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">Custom robotics support and components for engineering students.</p>
                                 </div>
-                                <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-colors">
-                                  <p className="text-sm font-bold text-[var(--text-main)] mb-1">Rapid Prototyping</p>
-                                  <p className="text-[10px] text-[var(--text-muted)]">Fast manufacturing and 3D printing for custom robotic parts.</p>
+                                <div 
+                                  onClick={() => { setCurrentView('model-upload'); setHoveredLink(null); }}
+                                  className="p-8 rounded-[2rem] bg-blue-500/5 border border-blue-500/10 hover:bg-blue-500/10 transition-all cursor-pointer group/card flex flex-col justify-center text-center"
+                                >
+                                  <div className="flex justify-center items-center gap-2 mb-2">
+                                    <p className="text-base font-bold text-[var(--text-main)] font-display">Customized 3D Model</p>
+                                    <ChevronRight size={16} className="text-primary opacity-0 group-hover/card:opacity-100 transition-all group-hover/card:translate-x-1" />
+                                  </div>
+                                  <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">Upload your proprietary designs for precision industrial 3D printing.</p>
                                 </div>
                               </div>
                             )}
@@ -245,22 +275,46 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory }) {
                 <div className="space-y-2">
                   <p className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-[0.2em] mb-4">Navigation</p>
                   {navLinks.map((item) => (
-                    <button 
-                      key={item.name} 
-                      onClick={() => {
-                        if (item.name !== 'Services') {
-                          setActiveCategory(item.name);
-                          setActiveItem(item.name);
-                          setIsMobileMenuOpen(false);
-                        }
-                      }}
-                      className="w-full text-left py-4 border-b border-[var(--border-subtle)] flex justify-between items-center group"
-                    >
-                      <span className={`text-xl font-bold font-display transition-colors ${activeItem === item.name ? 'text-primary' : 'text-[var(--text-main)]'}`}>
-                        {item.name}
-                      </span>
-                      <ChevronRight size={18} className="text-[var(--text-muted)] group-hover:text-primary transition-transform group-hover:translate-x-1" />
-                    </button>
+                    <div key={item.name}>
+                      <button 
+                        onClick={() => {
+                          if (item.name === 'Contact Us') {
+                            setCurrentView('contact');
+                            setActiveItem('Contact Us');
+                            setIsMobileMenuOpen(false);
+                          } else if (item.name !== 'Services') {
+                            setActiveCategory(item.name);
+                            setActiveItem(item.name);
+                            setIsMobileMenuOpen(false);
+                          } else {
+                            setActiveItem(activeItem === 'Services' ? null : 'Services');
+                          }
+                        }}
+                        className="w-full text-left py-4 border-b border-[var(--border-subtle)] flex justify-between items-center group"
+                      >
+                        <span className={`text-xl font-bold font-display transition-colors ${activeItem === item.name ? 'text-primary' : 'text-[var(--text-main)]'}`}>
+                          {item.name}
+                        </span>
+                        <ChevronRight size={18} className={`text-[var(--text-muted)] transition-transform ${activeItem === item.name && item.name === 'Services' ? 'rotate-90' : ''}`} />
+                      </button>
+                      
+                      {item.name === 'Services' && activeItem === 'Services' && (
+                        <div className="pl-4 py-4 space-y-4">
+                          <button 
+                            onClick={() => { setCurrentView('college-projects'); setIsMobileMenuOpen(false); }}
+                            className="w-full text-left py-2 text-sm font-bold text-[var(--text-muted)] hover:text-primary transition-colors"
+                          >
+                            College Projects
+                          </button>
+                          <button 
+                            onClick={() => { setCurrentView('model-upload'); setIsMobileMenuOpen(false); }}
+                            className="w-full text-left py-2 text-sm font-bold text-[var(--text-muted)] hover:text-primary transition-colors"
+                          >
+                            Customized 3D Model
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
                 <div className="pt-8">
@@ -283,6 +337,24 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory }) {
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} setCartItems={setCartItems} />
       <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
+      {/* Floating WhatsApp Button */}
+      <motion.a
+        href="https://wa.me/7995232673"
+        target="_blank"
+        rel="noopener noreferrer"
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        whileHover={{ scale: 1.1 }}
+        className="fixed bottom-8 right-8 z-[100] w-16 h-16 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(37,211,102,0.4)] transition-all cursor-pointer group"
+      >
+        <div className="absolute -top-12 right-0 bg-white text-black text-[10px] font-bold px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
+          Chat with Experts
+        </div>
+        <svg className="w-8 h-8 text-white fill-current" viewBox="0 0 24 24">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .004 5.412.001 12.04c0 2.123.554 4.197 1.606 6.034L0 24l6.135-1.61a11.803 11.803 0 005.912 1.586h.005c6.637 0 12.048-5.413 12.052-12.041a11.83 11.83 0 00-3.526-8.511z" />
+        </svg>
+      </motion.a>
     </>
   );
 }

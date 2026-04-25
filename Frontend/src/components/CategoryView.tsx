@@ -144,8 +144,8 @@ export default function CategoryView({ category: initialCategory, onBack, setCar
 
                     <div className="space-y-4">
                       <div className="flex items-end gap-3">
-                        <span className="text-2xl font-black text-[var(--text-main)] font-display tracking-tight">${product.price}</span>
-                        <span className="text-[var(--text-muted)] line-through text-xs font-medium mb-1">${(product.price * 1.4).toFixed(0)}</span>
+                        <span className="text-2xl font-black text-[var(--text-main)] font-display tracking-tight">₹{product.price}</span>
+                        <span className="text-[var(--text-muted)] line-through text-xs font-medium mb-1">₹{(product.price * 1.4).toFixed(0)}</span>
                         <span className="text-green-500 text-[10px] font-bold mb-1 ml-auto">Free Shipping</span>
                       </div>
 

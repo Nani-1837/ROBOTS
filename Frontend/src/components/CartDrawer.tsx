@@ -24,8 +24,8 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems }:
 
   const handleCheckout = () => {
     const number = "7995232673";
-    const itemDetails = cartItems.map(item => `- ${item.name} (x${item.qty}): $${item.price * item.qty}`).join('%0A');
-    const message = `Hello BISONIX! I would like to place an order:%0A%0A${itemDetails}%0A%0A*Total: $${subtotal.toLocaleString()}*%0A%0APlease let me know the next steps.`;
+    const itemDetails = cartItems.map(item => `- ${item.name} (x${item.qty}): ₹${item.price * item.qty}`).join('%0A');
+    const message = `Hello BISONIX! I would like to place an order:%0A%0A${itemDetails}%0A%0A*Total: ₹${subtotal.toLocaleString()}*%0A%0APlease let me know the next steps.`;
     window.open(`https://wa.me/${number}?text=${message}`, '_blank');
   };
 
@@ -84,7 +84,7 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems }:
                     <div className="flex-1 flex flex-col justify-between py-1">
                       <div>
                         <h3 className="text-[var(--text-main)] font-bold text-sm mb-1">{item.name}</h3>
-                        <p className="text-primary font-bold text-sm">${item.price}</p>
+                        <p className="text-primary font-bold text-sm">₹{item.price}</p>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3 bg-[var(--bg-secondary)] rounded-lg px-2 py-1 border border-[var(--border-subtle)]">
@@ -119,7 +119,7 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems }:
             <div className="p-6 border-t border-[var(--border-subtle)] bg-[var(--bg-secondary)]/50 space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-[var(--text-muted)] text-sm uppercase tracking-wider font-semibold">Subtotal</span>
-                <span className="text-[var(--text-main)] text-xl font-bold font-display">${subtotal.toLocaleString()}</span>
+                <span className="text-[var(--text-main)] text-xl font-bold font-display">₹{subtotal.toLocaleString()}</span>
               </div>
               <p className="text-[var(--text-muted)] text-xs leading-relaxed text-center">
                 Shipping and taxes calculated at checkout. Secure 256-bit encrypted transaction.

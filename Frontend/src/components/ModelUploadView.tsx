@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { API_URL } from '../config';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Upload, FileCode, CheckCircle, ArrowLeft, Globe, Layers, Box } from 'lucide-react';
-import ModelViewer from './ModelViewer';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -163,7 +162,11 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
               
               <div className="w-full h-full">
                 {fileUrl ? (
-                  <ModelViewer modelPath={fileUrl} />
+                  <div className="w-full h-full flex flex-col items-center justify-center text-green-500 space-y-4 bg-green-500/5">
+                    <FileCode size={64} className="animate-bounce" />
+                    <p className="text-sm font-bold uppercase tracking-widest text-center px-4">Model File Ready for Processing</p>
+                    <p className="text-[10px] text-[var(--text-muted)] italic">3D Preview disabled for performance</p>
+                  </div>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-[var(--text-muted)] space-y-4">
                     <Box size={48} className="opacity-20 animate-pulse" />

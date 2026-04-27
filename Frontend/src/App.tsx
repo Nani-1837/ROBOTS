@@ -6,7 +6,7 @@ import Features from './components/Features';
 import Stats from './components/Stats';
 import VersionBanner from './components/VersionBanner';
 import ProductGrid from './components/ProductGrid';
-import Footer from './components/Footer';
+const Footer = lazy(() => import('./components/Footer'));
 
 // Lazy load non-critical home components
 const NeuralArchitecture = lazy(() => import('./components/NeuralArchitecture'));
@@ -332,7 +332,9 @@ function App() {
       </AnimatePresence>
       </Suspense>
 
-      <Footer setCurrentView={setCurrentView} setActiveCategory={setActiveCategory} />
+      <Suspense fallback={<div className="h-20 animate-pulse bg-primary/5" />}>
+        <Footer setCurrentView={setCurrentView} setActiveCategory={setActiveCategory} />
+      </Suspense>
       </div>
       </LazyMotion>
     </ToastProvider>

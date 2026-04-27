@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Sun, Moon, ChevronDown, ChevronRight, X, LogOut, Settings, User as UserIcon, Bell, Ticket, MoreVertical } from 'lucide-react';
-import logo from '../assets/logo.png';
+const logo = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282208/bisonix_assets/logo.png";
 import AuthModal from './AuthModal';
 import CartDrawer from './CartDrawer';
 import SearchOverlay from './SearchOverlay';
-import dronesImg from '../assets/Drones.jpg';
-import carsImg from '../assets/Cars.jpg';
-import robotsImg from '../assets/Robots.jpg';
-import collegeProjectsImg from '../assets/College-Projects.jpg';
-import customBuildsImg from '../assets/Custom Builds.jpg';
+const dronesImg = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282210/bisonix_assets/Drones.jpg";
+const carsImg = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282211/bisonix_assets/Cars.jpg";
+const robotsImg = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282212/bisonix_assets/Robots.jpg";
+const collegeProjectsImg = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282213/bisonix_assets/College-Projects.jpg";
+const customBuildsImg = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282214/bisonix_assets/Custom%20Builds.jpg";
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config';
 

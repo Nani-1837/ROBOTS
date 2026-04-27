@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import herosectionImage from '../assets/herosection.png';
+const herosectionImage = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282207/bisonix_assets/herosection.png";
 
 export default function Hero({ setCurrentView, setActiveCategory }: { setCurrentView: any, setActiveCategory: any }) {
   const [index, setIndex] = useState(0);

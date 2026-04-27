@@ -2,7 +2,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef, Suspense, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { useGLTF, Stage, OrbitControls } from '@react-three/drei';
-import robotModel from '../assets/b12_robot.glb';
+const robotModel = "https://res.cloudinary.com/dqp0zkagb/raw/upload/v1777282492/bisonix_assets/b12_robot.glb";
 
 import { useFrame } from '@react-three/fiber';
 

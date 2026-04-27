@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Users, Zap, Shield, X, Cpu } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
-import logo from '../assets/logo.png';
+const logo = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282208/bisonix_assets/logo.png";
 
 // Custom Original Brand Icons (SVGs)
 const YoutubeIcon = () => (

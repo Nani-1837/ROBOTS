@@ -4,9 +4,9 @@ import { Plane, Car, Cuboid, Zap, Cpu, ShieldCheck } from 'lucide-react';
 
 
 // Import images
-import aiDroneImg from '../assets/AI-Powered Drones.jpg';
-import highPerfCarImg from '../assets/High-Performance RC Vehicles.jpg';
-import precision3DImg from '../assets/Precision 3D Models.jpg';
+const aiDroneImg = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282489/bisonix_assets/AI-Powered_Drones.jpg";
+const highPerfCarImg = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282490/bisonix_assets/High-Performance_RC_Vehicles.jpg";
+const precision3DImg = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282491/bisonix_assets/Precision_3D_Models.jpg";
 
 export default function Features() {
 

@@ -1,20 +1,43 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Star } from 'lucide-react';
-import prodDrone from '../assets/prod_drone.png';
-import prodCar from '../assets/prod_car.png';
-import prodMotor from '../assets/prod_motor.png';
-import prodKit from '../assets/prod_kit.png';
+import { Star, Heart } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
-const ProductCard = ({ image, name, category, price, delay, setCartItems }) => {
-  const addToCart = () => {
-    setCartItems((prev: any) => {
-      const existing = prev.find((item: any) => item.name === name);
-      if (existing) {
-        return prev.map((item: any) => item.name === name ? { ...item, qty: item.qty + 1 } : item);
+const ProductCard = ({ id, image, name, category, price, originalPrice, rating, numReviews, delay, onProductClick, isWishlisted, onToggle }: any) => {
+  const { user } = useAuth();
+  const { showToast } = useToast();
+
+  const handleWishlistClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      showToast('Please sign in to add items to your wishlist', 'info');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('insforgeToken');
+      const method = isWishlisted ? 'DELETE' : 'POST';
+      const url = isWishlisted 
+        ? `http://localhost:5000/api/wishlist/${id}` 
+        : 'http://localhost:5000/api/wishlist';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: isWishlisted ? null : JSON.stringify({ productId: id })
+      });
+
+      if (response.ok) {
+        onToggle(id, !isWishlisted);
+        showToast(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist', 'success');
       }
-      const numericPrice = parseFloat(price.replace(/,/g, ''));
-      return [...prev, { name, price: numericPrice, qty: 1, image }];
-    });
+    } catch (error) {
+      console.error('Wishlist error:', error);
+    }
   };
 
   return (
@@ -23,28 +46,25 @@ const ProductCard = ({ image, name, category, price, delay, setCartItems }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay, duration: 0.5 }}
-      className="bg-[var(--bg-primary)] rounded-[2rem] border border-[var(--border-subtle)] overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-2xl transition-all duration-500 group flex flex-col"
+      className="bg-[var(--bg-primary)] rounded-[2rem] border border-[var(--border-subtle)] overflow-hidden shadow-[var(--card-shadow)] hover:shadow-2xl transition-all duration-500 group flex flex-col card-premium"
     >
-      {/* Image Section - 1920x1080 Aspect Ratio */}
       <div className="relative aspect-[1920/1080] bg-[var(--bg-secondary)]/30 overflow-hidden flex items-center justify-center">
         <img 
           src={image} 
           alt={name} 
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        {/* Floating Level Badge */}
         <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md px-3 py-1 rounded-full border border-primary/10 flex items-center gap-1">
           <Star size={10} className="text-orange-500 fill-orange-500" />
           <p className="text-[8px] font-black text-primary uppercase tracking-tighter">Bestseller</p>
         </div>
       </div>
 
-      {/* Content Section */}
       <div className="p-5 sm:p-6 flex-1 flex flex-col space-y-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-3">
             <span className="px-2 py-0.5 bg-primary/5 text-primary rounded text-[9px] font-bold uppercase tracking-widest border border-primary/10">
-              {category}
+              {typeof category === 'object' ? category.name : category}
             </span>
             <span className="w-1 h-1 bg-[var(--text-muted)] rounded-full opacity-30" />
             <span className="text-[var(--text-muted)] text-[9px] font-bold uppercase tracking-widest">In Stock</span>
@@ -52,23 +72,41 @@ const ProductCard = ({ image, name, category, price, delay, setCartItems }) => {
           <h3 className="text-xl font-bold text-[var(--text-main)] font-display leading-tight group-hover:text-primary transition-colors">
             {name}
           </h3>
+          <div className="flex items-center gap-1 mt-1">
+            <div className="flex items-center gap-0.5 text-orange-400">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} size={10} fill={i < Math.floor(rating || 5) ? "currentColor" : "none"} />
+              ))}
+            </div>
+            <span className="text-[9px] font-bold text-[var(--text-muted)]">({numReviews || 0})</span>
+          </div>
         </div>
+
 
         <div className="space-y-4">
           <div className="flex items-end gap-3">
             <span className="text-2xl font-black text-[var(--text-main)] font-display tracking-tight">₹{price}</span>
-            <span className="text-[var(--text-muted)] line-through text-xs font-medium mb-1">₹{(parseFloat(price.replace(/,/g, '')) * 1.4).toFixed(0)}</span>
+            {originalPrice && (
+              <span className="text-[var(--text-muted)] line-through text-xs font-medium mb-1">₹{originalPrice}</span>
+            )}
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button className="flex-1 py-3.5 rounded-2xl bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] font-bold text-xs transition-all active:scale-95">
-              Explore
+            <button 
+              onClick={handleWishlistClick}
+              className="flex-1 py-3.5 rounded-2xl bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] font-bold text-xs transition-all active:scale-95 btn-premium flex items-center justify-center gap-2"
+            >
+              <Heart size={14} className={isWishlisted ? "text-red-500 fill-red-500" : "text-red-500"} />
+              Wishlist
             </button>
             <button 
-              onClick={addToCart}
-              className="flex-[1.5] py-3.5 rounded-2xl bg-gradient-to-r from-primary to-orange-600 hover:from-orange-600 hover:to-orange-500 text-white font-bold text-xs shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onProductClick?.(null); // This is just to satisfy the old prop if needed, but the loop is better
+              }}
+              className="flex-[1.5] py-3.5 rounded-2xl bg-gradient-to-r from-primary to-orange-600 hover:from-orange-600 hover:to-orange-500 text-white font-bold text-xs shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 btn-premium"
             >
-              <ShoppingCart size={14} /> Add to Cart
+              View more
             </button>
           </div>
         </div>
@@ -77,13 +115,41 @@ const ProductCard = ({ image, name, category, price, delay, setCartItems }) => {
   );
 };
 
-export default function ProductGrid({ setCartItems, setActiveCategory }) {
-  const products = [
-    { image: prodDrone, name: 'Swift-Blade Z1', category: 'Racing Drone', price: '899' },
-    { image: prodCar, name: 'Titan-Rover X', category: 'All-Terrain', price: '1249' },
-    { image: prodMotor, name: 'Vortex Core M1', category: 'Propulsion', price: '299' },
-    { image: prodKit, name: 'Bison-Part Kit', category: 'Customization', price: '149' },
-  ];
+
+export default function ProductGrid({ setActiveCategory, onProductClick }: { setActiveCategory: (cat: string) => void, onProductClick: (p: any) => void }) {
+  const [products, setProducts] = useState<any[]>([]);
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const prodRes = await fetch('http://localhost:5000/api/products');
+        const prodData = await prodRes.json();
+        if (prodRes.ok) {
+          setProducts(prodData.filter((p: any) => p.featured).slice(0, 3));
+        }
+
+        if (user) {
+          const token = localStorage.getItem('insforgeToken');
+          const wishRes = await fetch('http://localhost:5000/api/wishlist', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const wishData = await wishRes.json();
+          if (wishRes.ok) {
+            setWishlistIds(wishData.products?.map((p: any) => p._id) || []);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [user]);
+
 
   return (
     <section className="relative w-full bg-[var(--bg-primary)] py-32 px-6 transition-colors duration-400">
@@ -106,16 +172,34 @@ export default function ProductGrid({ setCartItems, setActiveCategory }) {
           </motion.p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product, i) => (
-            <ProductCard 
-              key={i} 
-              {...product} 
-              delay={i * 0.1} 
-              setCartItems={setCartItems}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {products.length > 0 ? (
+              products.map((product, idx) => (
+                <ProductCard 
+                  key={product._id}
+                  id={product._id}
+                  image={product.images?.[0] || 'https://via.placeholder.com/600x400?text=Bisonix+Robotics'}
+                  name={product.name} 
+                  category={typeof product.category === 'object' ? product.category.name : product.category}
+                  price={product.price}
+                  originalPrice={product.originalPrice}
+                  rating={product.rating || 4.5}
+                  numReviews={product.numReviews || 12}
+                  delay={idx * 0.1}
+                  isWishlisted={wishlistIds.includes(product._id)}
+                  onToggle={(id: string, state: boolean) => {
+                    if (state) setWishlistIds(prev => [...prev, id]);
+                    else setWishlistIds(prev => prev.filter(wid => wid !== id));
+                  }}
+                  onProductClick={() => onProductClick?.(product)}
+                />
+              ))
+            ) : null}
+          </div>
+        )}
 
         <div className="mt-20 text-center">
           <motion.button 

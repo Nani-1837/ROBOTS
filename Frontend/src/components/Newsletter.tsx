@@ -1,7 +1,39 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Zap } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 
 export default function Newsletter() {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/community/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        showToast(data.message || 'Welcome to the Hive!', 'success');
+        setEmail('');
+      } else {
+        showToast(data.message || 'Subscription failed', 'error');
+      }
+    } catch (err) {
+      showToast('Connection failed. Please try again later.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <section className="relative w-full bg-[var(--bg-primary)] py-32 px-6 overflow-hidden transition-colors duration-400">
       <div className="max-w-5xl mx-auto">
@@ -30,14 +62,22 @@ export default function Newsletter() {
               Get early access to flagship launches, open-source documentation, and exclusive hardware discounts.
             </p>
 
-            <form className="w-full max-w-md relative flex flex-col sm:flex-row gap-3" onSubmit={(e) => e.preventDefault()}>
+            <form className="w-full max-w-md relative flex flex-col sm:flex-row gap-3" onSubmit={handleSubscribe}>
               <input 
                 type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email" 
-                className="flex-1 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl md:rounded-2xl px-6 py-4 md:py-5 text-sm focus:border-primary outline-none transition-all shadow-inner"
+                required
+                className="flex-1 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl md:rounded-2xl px-6 py-4 md:py-5 text-sm focus:border-primary outline-none transition-all shadow-inner disabled:opacity-50"
+                disabled={loading}
               />
-              <button className="bg-primary hover:bg-orange-600 text-white p-4 md:p-5 rounded-xl md:rounded-2xl transition-all active:scale-95 shadow-xl shadow-primary/20 flex items-center justify-center">
-                <Send size={20} className="md:w-6 md:h-6" />
+              <button 
+                type="submit"
+                disabled={loading}
+                className="bg-primary hover:bg-orange-600 text-white p-4 md:p-5 rounded-xl md:rounded-2xl transition-all active:scale-95 shadow-xl shadow-primary/20 flex items-center justify-center disabled:opacity-50"
+              >
+                {loading ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send size={20} className="md:w-6 md:h-6" />}
                 <span className="ml-2 sm:hidden font-bold">Subscribe</span>
               </button>
             </form>

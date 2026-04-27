@@ -1,11 +1,46 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight, Mail, Phone, MapPin, Send, MessageSquare } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 
 interface ContactViewProps {
   onBack: () => void;
 }
 
 export default function ContactView({ onBack }: ContactViewProps) {
+  const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
+  const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+      showToast('All fields are required', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        showToast(data.message || 'Message sent successfully!', 'success');
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      } else {
+        showToast(data.message || 'Failed to send message', 'error');
+      }
+    } catch (err) {
+      showToast('Connection failed. Please try again later.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, x: 20 }}
@@ -72,32 +107,62 @@ export default function ContactView({ onBack }: ContactViewProps) {
                 Send a Message
               </h3>
               
-              <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+              <form className="space-y-6" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Name</label>
-                    <input type="text" placeholder="Your Name" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors" />
+                    <input 
+                      type="text" 
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      placeholder="Your Name" 
+                      disabled={loading}
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors disabled:opacity-50" 
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Subject</label>
-                    <input type="text" placeholder="Topic" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors" />
+                    <input 
+                      type="text" 
+                      value={formData.subject}
+                      onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                      placeholder="Topic" 
+                      disabled={loading}
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors disabled:opacity-50" 
+                    />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Email Address</label>
-                  <input type="email" placeholder="email@example.com" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors" />
+                  <input 
+                    type="email" 
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    placeholder="email@example.com" 
+                    disabled={loading}
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors disabled:opacity-50" 
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Message</label>
-                  <textarea rows={4} placeholder="How can we help?" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors resize-none" />
+                  <textarea 
+                    rows={4} 
+                    value={formData.message}
+                    onChange={(e) => setFormData({...formData, message: e.target.value})}
+                    placeholder="How can we help?" 
+                    disabled={loading}
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors resize-none disabled:opacity-50" 
+                  />
                 </div>
 
                 <button 
-                  className="w-full bg-gradient-to-r from-primary to-orange-600 text-white font-bold py-5 rounded-2xl shadow-xl shadow-primary/20 hover:from-orange-600 hover:to-orange-500 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-primary to-orange-600 text-white font-bold py-5 rounded-2xl shadow-xl shadow-primary/20 hover:from-orange-600 hover:to-orange-500 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  <Send size={18} /> Send Message
+                  {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><Send size={18} /> Send Message</>}
                 </button>
               </form>
             </div>
@@ -111,10 +176,10 @@ export default function ContactView({ onBack }: ContactViewProps) {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mt-32 relative group"
+          className="mt-20 sm:mt-32 relative group"
         >
-          <div className="absolute -inset-4 bg-primary/10 rounded-[3.5rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-          <div className="relative aspect-video w-full rounded-[3rem] overflow-hidden border border-[var(--border-subtle)] shadow-2xl">
+          <div className="absolute -inset-4 bg-primary/10 rounded-[2rem] sm:rounded-[3.5rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          <div className="relative h-[400px] sm:aspect-video w-full rounded-[2rem] sm:rounded-[3rem] overflow-hidden border border-[var(--border-subtle)] shadow-2xl">
             <iframe 
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d122410.23190861113!2d80.5748443314051!3d16.506174246969543!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a35eff9482d9441%3A0x66d3e0b56863d40!2sVijayawada%2C%20Andhra%20Pradesh!5e0!3m2!1sen!2sin!4v1714051000000!5m2!1sen!2sin" 
               width="100%" 
@@ -127,9 +192,9 @@ export default function ContactView({ onBack }: ContactViewProps) {
             />
           </div>
           
-          <div className="absolute top-8 left-8 bg-[var(--bg-secondary)]/90 backdrop-blur-xl p-6 rounded-2xl border border-primary/20 shadow-2xl pointer-events-none">
-            <h4 className="text-primary font-black text-xs uppercase tracking-widest mb-1">Our HQ</h4>
-            <p className="text-[var(--text-main)] font-bold text-lg font-display">Vijayawada, India</p>
+          <div className="absolute top-4 left-4 sm:top-8 sm:left-8 bg-[var(--bg-secondary)]/90 backdrop-blur-xl p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-primary/20 shadow-2xl pointer-events-none">
+            <h4 className="text-primary font-black text-[8px] sm:text-xs uppercase tracking-widest mb-1">Our HQ</h4>
+            <p className="text-[var(--text-main)] font-bold text-sm sm:text-lg font-display">Vijayawada, India</p>
           </div>
         </motion.div>
 

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, Users, Zap, Shield, X } from 'lucide-react';
+import { Target, Users, Zap, Shield, X, Cpu } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 import logo from '../assets/logo.png';
+
 // Custom Original Brand Icons (SVGs)
 const YoutubeIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -41,9 +43,38 @@ const SnapchatIcon = () => (
   </svg>
 );
 
-export default function Footer() {
+export default function Footer({ setCurrentView, setActiveCategory }: { setCurrentView?: (view: any) => void, setActiveCategory?: (cat: any) => void }) {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const currentYear = new Date().getFullYear();
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/community/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        showToast(data.message || 'Welcome to the Hive!', 'success');
+        setEmail('');
+      } else {
+        showToast(data.message || 'Subscription failed', 'error');
+      }
+    } catch (err) {
+      showToast('Connection failed. Please try again later.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const socialLinks = [
     { name: 'YouTube', icon: YoutubeIcon, color: '#FF0000', href: '#' },
@@ -54,10 +85,6 @@ export default function Footer() {
     { name: 'Snapchat', icon: SnapchatIcon, color: '#FFFC00', href: '#' },
   ];
 
-  const toggleAbout = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsAboutOpen(!isAboutOpen);
-  };
 
   return (
     <footer className="relative w-full bg-[var(--bg-primary)] border-t border-[var(--border-subtle)] pt-24 pb-12 px-6 overflow-hidden transition-colors duration-400">
@@ -65,15 +92,22 @@ export default function Footer() {
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16 mb-20">
           
           {/* Brand Info */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center gap-3 mb-6">
-              <img src={logo} alt="Bisonix Logo" className="h-20 w-auto" />
+          <div className="flex flex-col items-start">
+            <div 
+              className="flex items-center gap-3 mb-6 cursor-pointer"
+              onClick={() => {
+                setCurrentView?.('home');
+                setActiveCategory?.(null);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            >
+              <img src={logo} alt="BISONIX Logo" className="h-16 w-auto" />
             </div>
-            <p className="text-[var(--text-muted)] text-sm leading-relaxed mb-8 max-w-xs">
-              Engineering the next generation of autonomous robotics. Redefining speed, control, and precision for enthusiasts and professionals.
+            <p className="text-[var(--text-muted)] text-sm leading-relaxed mb-8 max-w-xs font-medium">
+              Engineering intelligent systems for a smarter, autonomous future.
             </p>
             <div className="flex flex-wrap gap-3">
               {socialLinks.map((social, i) => (
@@ -99,13 +133,52 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Products */}
           <div>
-            <h4 className="text-[var(--text-main)] font-bold font-display mb-6">Ecosystem</h4>
+            <h4 className="text-[var(--text-main)] font-bold font-display mb-6 uppercase tracking-widest text-xs">Products</h4>
             <ul className="space-y-4">
-              {['Drones', 'RC Vehicles', '3D Models', 'Software', 'Accessories'].map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-[var(--text-muted)] text-sm hover:text-primary transition-colors">{link}</a>
+              {[
+                { name: 'Robots', cat: 'Robo Toys' },
+                { name: 'Drones', cat: 'Drones' },
+                { name: 'RC Vehicles', cat: 'RC Vehicles' },
+                { name: '3D Models', cat: '3D Models' }
+              ].map((link) => (
+                <li key={link.name}>
+                  <button 
+                    onClick={() => {
+                      setCurrentView?.('category');
+                      setActiveCategory?.(link.cat);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="text-[var(--text-muted)] text-sm hover:text-primary transition-colors font-medium text-left"
+                  >
+                    {link.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Solutions */}
+          <div>
+            <h4 className="text-[var(--text-main)] font-bold font-display mb-6 uppercase tracking-widest text-xs">Solutions</h4>
+            <ul className="space-y-4">
+              {[
+                { name: 'Custom Engineering', view: 'model-upload' },
+                { name: 'Prototyping', view: 'model-upload' },
+                { name: 'Student Projects', view: 'college-projects' }
+              ].map((link) => (
+                <li key={link.name}>
+                  <button 
+                    onClick={() => {
+                      setCurrentView?.(link.view);
+                      setActiveCategory?.(null);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="text-[var(--text-muted)] text-sm hover:text-primary transition-colors font-medium text-left"
+                  >
+                    {link.name}
+                  </button>
                 </li>
               ))}
             </ul>
@@ -113,47 +186,68 @@ export default function Footer() {
 
           {/* Company */}
           <div>
-            <h4 className="text-[var(--text-main)] font-bold font-display mb-6">Company</h4>
+            <h4 className="text-[var(--text-main)] font-bold font-display mb-6 uppercase tracking-widest text-xs">Company</h4>
             <ul className="space-y-4">
-              <li>
-                <a href="#about" onClick={toggleAbout} className="text-[var(--text-muted)] text-sm hover:text-primary transition-colors">About Us</a>
-              </li>
-              {['Technology', 'Sustainability', 'Careers', 'Contact'].map((link) => (
+              {['About', 'Technology', 'Careers', 'Contact'].map((link) => (
                 <li key={link}>
-                  <a href="#" className="text-[var(--text-muted)] text-sm hover:text-primary transition-colors">{link}</a>
+                  <button 
+                    onClick={() => {
+                      if (link === 'Contact') {
+                        setCurrentView?.('contact');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      } else {
+                        setIsAboutOpen(true);
+                        setTimeout(() => {
+                          const id = link === 'About' ? 'our-story' : link.toLowerCase() + '-section';
+                          document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
+                      }
+                    }} 
+                    className="text-[var(--text-muted)] text-sm hover:text-primary transition-colors font-medium text-left"
+                  >
+                    {link}
+                  </button>
                 </li>
               ))}
             </ul>
           </div>
+        </div>
 
-          {/* Newsletter */}
-          <div>
-            <h4 className="text-[var(--text-main)] font-bold font-display mb-6">Join the Future</h4>
-            <p className="text-[var(--text-muted)] text-sm mb-6 leading-relaxed">
-              Subscribe for early access to new releases and technical updates.
-            </p>
-            <div className="flex flex-col gap-3">
-              <input 
-                type="email" 
-                placeholder="email@example.com" 
-                className="w-full bg-[var(--text-main)]/5 border border-[var(--border-subtle)] rounded-xl py-3 px-4 text-[var(--text-main)] text-sm focus:outline-none focus:border-primary transition-colors"
-              />
-              <button className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-colors">
-                Subscribe
-              </button>
-            </div>
-          </div>
+        {/* Newsletter - Centered at Bottom */}
+        <div className="max-w-md mx-auto text-center mb-20 pt-12 border-t border-[var(--border-subtle)]">
+          <h4 className="text-[var(--text-main)] font-bold font-display mb-4 uppercase tracking-widest text-xs">Connect</h4>
+          <p className="text-[var(--text-muted)] text-sm mb-8 leading-relaxed font-medium">
+            Follow our journey and stay updated.
+          </p>
+          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3">
+            <input 
+              type="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email Address" 
+              required
+              disabled={loading}
+              className="flex-1 bg-[var(--text-main)]/5 border border-[var(--border-subtle)] rounded-xl py-3 px-6 text-[var(--text-main)] text-sm focus:outline-none focus:border-primary transition-colors font-medium text-center sm:text-left disabled:opacity-50"
+            />
+            <button 
+              type="submit"
+              disabled={loading}
+              className="px-8 bg-primary text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-colors text-sm whitespace-nowrap disabled:opacity-50 flex items-center justify-center min-w-[120px]"
+            >
+              {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Subscribe'}
+            </button>
+          </form>
         </div>
 
         {/* Bottom Bar */}
         <div className="border-t border-[var(--border-subtle)] pt-12 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-[var(--text-muted)] text-xs">
-            © {currentYear} Bisonix Robotics Ecosystem. All rights reserved.
+          <p className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest">
+            © 2026 BISONIX Robotics
           </p>
           <div className="flex gap-8">
-            <a href="#" className="text-[var(--text-muted)] text-xs hover:text-[var(--text-main)] transition-colors">Privacy Policy</a>
-            <a href="#" className="text-[var(--text-muted)] text-xs hover:text-[var(--text-main)] transition-colors">Terms of Service</a>
-            <a href="#" className="text-[var(--text-muted)] text-xs hover:text-[var(--text-main)] transition-colors">Cookies</a>
+            <a href="#" className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest hover:text-primary transition-colors">Privacy</a>
+            <a href="#" className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest hover:text-primary transition-colors">Terms</a>
+            <a href="#" className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest hover:text-primary transition-colors">Cookies</a>
           </div>
         </div>
       </div>
@@ -182,48 +276,199 @@ export default function Footer() {
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.1 }}
-                className="space-y-16"
+                className="space-y-20"
               >
-                <div className="text-center pt-8">
+                <div id="our-story" className="text-center pt-8">
                   <span className="text-primary font-bold tracking-[0.4em] uppercase text-[10px] mb-6 block">Our Story</span>
                   <h2 className="text-5xl md:text-8xl font-black font-display text-[var(--text-main)] leading-[0.9] tracking-tighter">
                     Engineering <br /> the <span className="text-orange-500">Impossible.</span>
                   </h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 pt-8 md:pt-12">
-                  <div className="space-y-4 md:space-y-6">
-                    <h3 className="text-xl md:text-2xl font-bold text-[var(--text-main)]">Who We Are</h3>
-                    <p className="text-[var(--text-muted)] leading-relaxed text-base md:text-lg">
-                      Founded in 2024, Bisonix was born out of a passion for pushing the boundaries of what's possible in the world of autonomous robotics. We specialize in high-performance drones and intelligent vehicles.
+                {/* Who We Are */}
+                <div className="space-y-8">
+                  <h3 className="text-2xl md:text-3xl font-bold text-[var(--text-main)] border-l-4 border-primary pl-6">Who We Are</h3>
+                  <div className="space-y-6 text-[var(--text-muted)] text-base md:text-lg leading-relaxed">
+                    <p>
+                      Founded in 2026 May-1, <span className="text-[var(--text-main)] font-bold">BISONIX</span> was built with a shared vision — to push the limits of autonomous robotics and intelligent systems.
                     </p>
-                  </div>
-                  <div className="space-y-4 md:space-y-6">
-                    <h3 className="text-xl md:text-2xl font-bold text-[var(--text-main)]">Our Mission</h3>
-                    <p className="text-[var(--text-muted)] leading-relaxed text-base md:text-lg">
-                      To empower enthusiasts and professionals with cutting-edge technology that bridges the gap between hardware precision and artificial intelligence.
+                    <p>
+                      Started by a team of passionate innovators — <span className="text-primary font-bold">Jayaveer, Nikhitha, and Girish</span> — BISONIX brings together creativity, engineering precision, and real-world problem solving.
+                    </p>
+                    <p>
+                      We specialize in high-performance drones, intelligent RC systems, and precision 3D solutions designed for creators, students, and professionals.
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 pt-8 md:pt-12">
+                {/* Mission & Vision */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8">
+                  <div className="space-y-4">
+                    <h3 className="text-xl md:text-2xl font-bold text-[var(--text-main)]">Our Mission</h3>
+                    <p className="text-[var(--text-muted)] leading-relaxed">
+                      To empower the next generation of innovators with powerful, accessible technology that bridges hardware and artificial intelligence.
+                    </p>
+                  </div>
+                  <div className="space-y-4">
+                    <h3 className="text-xl md:text-2xl font-bold text-[var(--text-main)]">Our Vision</h3>
+                    <p className="text-[var(--text-muted)] leading-relaxed">
+                      To build a future where intelligent machines enhance human capability across industries, education, and everyday life.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Core Values */}
+                <div className="pt-12">
+                  <h3 className="text-2xl md:text-3xl font-bold text-[var(--text-main)] mb-10 text-center">Core Values</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    {[
+                      { title: "Innovation First", desc: "We constantly experiment, build, and evolve." },
+                      { title: "Precision Engineering", desc: "Every product is designed for performance and reliability." },
+                      { title: "Community Driven", desc: "We grow with our users — builders, students, and creators." },
+                      { title: "Real-World Impact", desc: "We focus on practical solutions, not just concepts." }
+                    ].map((value, i) => (
+                      <div key={i} className="p-6 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] hover:border-primary/30 transition-colors">
+                        <h4 className="text-primary font-bold mb-2">• {value.title}</h4>
+                        <p className="text-[var(--text-muted)] text-sm">{value.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Our Team */}
+                <div className="pt-12">
+                  <h3 className="text-2xl md:text-3xl font-bold text-[var(--text-main)] mb-10 text-center">Our Team</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {[
+                      { name: "Jayaveer", role: "Founder & Product Vision" },
+                      { name: "Nikhitha", role: "Co-Founder & Design / Operations" },
+                      { name: "Girish", role: "Co-Founder & Engineering" }
+                    ].map((member, i) => (
+                      <div key={i} className="text-center p-8 rounded-3xl bg-[var(--text-main)]/5 border border-[var(--border-subtle)]">
+                        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto mb-6 text-2xl font-black">
+                          {member.name[0]}
+                        </div>
+                        <h4 className="text-[var(--text-main)] font-bold text-lg mb-1">{member.name}</h4>
+                        <p className="text-[var(--text-muted)] text-xs font-medium uppercase tracking-widest">{member.role}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 pt-12">
                   {[
-                    { icon: Target, label: 'Precision', value: '0.001s' },
-                    { icon: Users, label: 'Engineers', value: '50+' },
-                    { icon: Zap, label: 'Performance', value: '100%' },
-                    { icon: Shield, label: 'Security', value: 'Triple' }
+                    { icon: Target, label: 'Precision', value: '0.001s Response' },
+                    { icon: Users, label: 'Engineers', value: '50+ Contributors' },
+                    { icon: Zap, label: 'Performance', value: '100% Tested' },
+                    { icon: Shield, label: 'Security', value: 'Advanced Systems' }
                   ].map((stat, i) => (
-                    <div key={i} className="bg-[var(--bg-secondary)] p-6 rounded-3xl border border-[var(--border-subtle)] text-center">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary mx-auto mb-4">
+                    <div key={i} className="bg-[var(--bg-secondary)] p-6 rounded-3xl border border-[var(--border-subtle)] text-center group hover:border-primary/50 transition-all">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary mx-auto mb-4 group-hover:scale-110 transition-transform">
                         <stat.icon size={20} />
                       </div>
                       <p className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest mb-1">{stat.label}</p>
-                      <p className="text-[var(--text-main)] text-xl font-black">{stat.value}</p>
+                      <p className="text-[var(--text-main)] text-sm md:text-base font-black">{stat.value}</p>
                     </div>
                   ))}
                 </div>
 
-                <div className="pt-12 text-center">
+                {/* Technology Section */}
+                <div id="technology-section" className="pt-20 space-y-12">
+                  <div className="text-center">
+                    <span className="text-primary font-bold tracking-[0.4em] uppercase text-[10px] mb-4 block">Innovation</span>
+                    <h3 className="text-3xl md:text-5xl font-black text-[var(--text-main)] font-display">Technology Stack</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div className="space-y-6">
+                      <h4 className="text-xl font-bold text-primary">Neural Core Engine</h4>
+                      <p className="text-[var(--text-muted)] leading-relaxed">
+                        Our proprietary <span className="text-[var(--text-main)] font-bold">BBP-V1</span> (Bionic Bridge Processor) utilizes low-latency neural mapping to synchronize hardware response with AI-driven pathfinding.
+                      </p>
+                      <ul className="space-y-3">
+                        {['Real-time SLAM Navigation', 'Zero-Latency Torque Control', 'Adaptive Environmental Learning'].map((item, i) => (
+                          <li key={i} className="flex items-center gap-3 text-sm text-[var(--text-muted)]">
+                            <div className="w-1.5 h-1.5 bg-primary rounded-full" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="bg-primary/5 border border-primary/20 p-8 rounded-[2.5rem] relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <Cpu size={120} />
+                      </div>
+                      <h5 className="text-primary font-black text-4xl mb-2">BBP-V1</h5>
+                      <p className="text-[var(--text-main)] font-bold text-xs uppercase tracking-widest opacity-60">Neural Processing Unit</p>
+                      <div className="mt-8 space-y-4">
+                        <div className="h-1 w-full bg-primary/10 rounded-full overflow-hidden">
+                          <div className="h-full bg-primary w-[85%]" />
+                        </div>
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest text-right">85% Efficiency Optimization</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Careers Section */}
+                <div className="pt-20 space-y-12 bg-primary/[0.02] -mx-6 md:-mx-12 px-6 md:px-12 py-20">
+                  <div className="text-center">
+                    <span className="text-primary font-bold tracking-[0.4em] uppercase text-[10px] mb-4 block">Join Us</span>
+                    <h3 className="text-3xl md:text-5xl font-black text-[var(--text-main)] font-display">Careers</h3>
+                    <p className="text-[var(--text-muted)] mt-4 max-w-xl mx-auto">We're looking for the boldest minds to help us build the future of autonomous machines.</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[
+                      { title: "AI/ML Engineer", dept: "Robotics Core" },
+                      { title: "Hardware Architect", dept: "Physical Systems" },
+                      { title: "Industrial Designer", dept: "Creative" }
+                    ].map((job, i) => (
+                      <div key={i} className="p-8 rounded-3xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] hover:border-primary transition-all group">
+                        <h4 className="text-[var(--text-main)] font-bold text-lg mb-2 group-hover:text-primary transition-colors">{job.title}</h4>
+                        <p className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest mb-6">{job.dept}</p>
+                        <button className="text-xs font-bold text-primary flex items-center gap-2 group-hover:gap-4 transition-all">
+                          Apply Now <span className="text-lg">→</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-center pt-8">
+                    <p className="text-[var(--text-muted)] text-sm italic">Don't see your role? Email us at <span className="text-primary font-bold not-italic">careers@bisonix.com</span></p>
+                  </div>
+                </div>
+
+                {/* Contact Section */}
+                <div id="contact-section" className="pt-20 pb-12 space-y-12">
+                  <div className="text-center">
+                    <span className="text-primary font-bold tracking-[0.4em] uppercase text-[10px] mb-4 block">Get in Touch</span>
+                    <h3 className="text-3xl md:text-5xl font-black text-[var(--text-main)] font-display">Contact Us</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="p-8 rounded-3xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-center">
+                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mx-auto mb-6">
+                        <Target size={24} />
+                      </div>
+                      <h4 className="text-[var(--text-main)] font-bold mb-2">Global HQ</h4>
+                      <p className="text-[var(--text-muted)] text-sm">Innovation Hub, Level 42<br />Tech Valley, CA 94043</p>
+                    </div>
+                    <div className="p-8 rounded-3xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-center">
+                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mx-auto mb-6">
+                        <Users size={24} />
+                      </div>
+                      <h4 className="text-[var(--text-main)] font-bold mb-2">Business Inquiries</h4>
+                      <p className="text-[var(--text-muted)] text-sm">partners@bisonix.com<br />+1 (555) 0123 4567</p>
+                    </div>
+                    <div className="p-8 rounded-3xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-center">
+                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mx-auto mb-6">
+                        <Zap size={24} />
+                      </div>
+                      <h4 className="text-[var(--text-main)] font-bold mb-2">Technical Support</h4>
+                      <p className="text-[var(--text-muted)] text-sm">support@bisonix.com<br />Help Center: bisonix.co/help</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-12 text-center pb-20">
                   <button 
                     onClick={() => setIsAboutOpen(false)}
                     className="px-12 py-5 bg-primary text-white font-bold rounded-2xl hover:bg-orange-600 transition-all shadow-xl shadow-primary/20"

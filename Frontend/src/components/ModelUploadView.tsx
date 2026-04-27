@@ -1,17 +1,30 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Upload, FileCode, CheckCircle, AlertCircle, ArrowLeft, Globe, Layers, Box } from 'lucide-react';
+import { ChevronRight, Upload, FileCode, CheckCircle, ArrowLeft, Globe, Layers, Box } from 'lucide-react';
 import ModelViewer from './ModelViewer';
+import { useToast } from '../context/ToastContext';
 
 interface ModelUploadViewProps {
   onBack: () => void;
 }
 
 export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
+  const { showToast } = useToast();
   const [step, setStep] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [material, setMaterial] = useState('Resin (Grey)');
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    email: '',
+    address: '',
+    country: '',
+    city: '',
+    pincode: ''
+  });
 
   const materials = [
     { name: 'Resin (Grey)', price: '₹499', color: '#8E8E8E' },
@@ -25,9 +38,14 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
     if (selectedFile) {
       // Check if file is GLB
       if (selectedFile.name.toLowerCase().endsWith('.glb')) {
+        // Check size (100MB limit for our Cloudinary configuration)
+        if (selectedFile.size > 100 * 1024 * 1024) {
+          showToast("File is too large. Maximum size is 100MB.", 'error');
+          return;
+        }
         setFile(selectedFile);
       } else {
-        alert("Please upload a .glb file only.");
+        showToast("Please upload a .glb file only.", 'error');
       }
     }
   };
@@ -38,6 +56,58 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
   }, [file]);
 
   const countries = ["India", "United States", "United Kingdom", "Germany", "Japan", "Canada", "Australia"];
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) {
+      showToast('Please upload a 3D model file first', 'error');
+      return;
+    }
+
+    setLoading(true);
+    const submitData = new FormData();
+    submitData.append('modelFile', file);
+    submitData.append('material', material);
+    
+    // Stringify nested objects
+    submitData.append('contact', JSON.stringify({
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phone: formData.phone,
+      email: formData.email
+    }));
+    
+    submitData.append('shipping', JSON.stringify({
+      address: formData.address,
+      country: formData.country,
+      city: formData.city,
+      pincode: formData.pincode
+    }));
+
+    try {
+      const res = await fetch('http://localhost:5000/api/custom-prints', {
+        method: 'POST',
+        body: submitData
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        showToast(data.message || 'Quotation request submitted!', 'success');
+        setStep(1);
+        setFile(null);
+        setFormData({
+          firstName: '', lastName: '', phone: '', email: '',
+          address: '', country: '', city: '', pincode: ''
+        });
+      } else {
+        showToast(data.message || 'Failed to submit request', 'error');
+      }
+    } catch (err) {
+      showToast('Connection failed. Please try again later.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <motion.div 
@@ -213,15 +283,31 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
                   </button>
                   <h3 className="text-2xl font-bold text-[var(--text-main)] mb-8 font-display">Step 2: Contact Details</h3>
                   
-                  <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+                  <form className="space-y-5" onSubmit={handleSubmit}>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">First Name <span className="text-primary">*</span></label>
-                        <input type="text" required placeholder="John" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors" />
+                        <input 
+                          type="text" 
+                          required 
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                          disabled={loading}
+                          placeholder="John" 
+                          className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors disabled:opacity-50" 
+                        />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Last Name <span className="text-primary">*</span></label>
-                        <input type="text" required placeholder="Doe" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors" />
+                        <input 
+                          type="text" 
+                          required 
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                          disabled={loading}
+                          placeholder="Doe" 
+                          className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors disabled:opacity-50" 
+                        />
                       </div>
                     </div>
 
@@ -236,24 +322,42 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
                           <input 
                             type="tel" 
                             required 
+                            value={formData.phone}
+                            onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/[^0-9]/g, '')})}
+                            disabled={loading}
                             minLength={10}
                             maxLength={10}
                             pattern="[0-9]{10}"
                             placeholder="9876543210" 
-                            className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl pl-16 pr-4 py-3 text-sm focus:border-primary outline-none transition-colors" 
-                            onInput={(e: any) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
+                            className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl pl-16 pr-4 py-3 text-sm focus:border-primary outline-none transition-colors disabled:opacity-50" 
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Email <span className="text-primary">*</span></label>
-                        <input type="email" required placeholder="john@example.com" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors" />
+                        <input 
+                          type="email" 
+                          required 
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          disabled={loading}
+                          placeholder="john@example.com" 
+                          className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors disabled:opacity-50" 
+                        />
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Address <span className="text-primary">*</span></label>
-                      <textarea required placeholder="Full street address" rows={2} className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors resize-none" />
+                      <textarea 
+                        required 
+                        value={formData.address}
+                        onChange={(e) => setFormData({...formData, address: e.target.value})}
+                        disabled={loading}
+                        placeholder="Full street address" 
+                        rows={2} 
+                        className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors resize-none disabled:opacity-50" 
+                      />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -261,7 +365,13 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
                         <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Country <span className="text-primary">*</span></label>
                         <div className="relative">
                           <Globe className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={14} />
-                          <select required className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors appearance-none cursor-pointer">
+                          <select 
+                            required 
+                            value={formData.country}
+                            onChange={(e) => setFormData({...formData, country: e.target.value})}
+                            disabled={loading}
+                            className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors appearance-none cursor-pointer disabled:opacity-50"
+                          >
                             <option value="">Select Country</option>
                             {countries.map(c => <option key={c} value={c}>{c}</option>)}
                           </select>
@@ -269,7 +379,15 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">City <span className="text-primary">*</span></label>
-                        <input type="text" required placeholder="Mumbai" className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors" />
+                        <input 
+                          type="text" 
+                          required 
+                          value={formData.city}
+                          onChange={(e) => setFormData({...formData, city: e.target.value})}
+                          disabled={loading}
+                          placeholder="Mumbai" 
+                          className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors disabled:opacity-50" 
+                        />
                       </div>
                     </div>
 
@@ -278,19 +396,29 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
                       <input 
                         type="text" 
                         required 
+                        value={formData.pincode}
+                        onChange={(e) => setFormData({...formData, pincode: e.target.value.replace(/[^0-9]/g, '')})}
+                        disabled={loading}
                         maxLength={6}
                         pattern="[0-9]{6}"
                         placeholder="400001" 
-                        className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors" 
-                        onInput={(e: any) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
+                        className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-colors disabled:opacity-50" 
                       />
                     </div>
 
                     <button 
                       type="submit"
-                      className="w-full mt-4 bg-gradient-to-r from-primary to-orange-600 text-white font-bold py-5 rounded-2xl shadow-xl shadow-primary/20 hover:from-orange-600 hover:to-orange-500 transition-all active:scale-95"
+                      disabled={loading}
+                      className="w-full mt-4 bg-gradient-to-r from-primary to-orange-600 text-white font-bold py-5 rounded-2xl shadow-xl shadow-primary/20 hover:from-orange-600 hover:to-orange-500 transition-all active:scale-95 flex justify-center items-center gap-2 disabled:opacity-50"
                     >
-                      Submit Quotation Request
+                      {loading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> 
+                          Uploading... This may take a minute.
+                        </>
+                      ) : (
+                        "Submit Quotation Request"
+                      )}
                     </button>
                   </form>
                 </motion.div>

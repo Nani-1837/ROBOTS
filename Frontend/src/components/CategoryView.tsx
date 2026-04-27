@@ -1,35 +1,126 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { motion } from 'framer-motion';
-import { Search, ChevronRight, Filter, Grid, List as ListIcon, ShoppingCart, ArrowLeft } from 'lucide-react';
+import { Search, ChevronRight, Filter, Grid, List as ListIcon, ArrowLeft, Heart, Plane } from 'lucide-react';
+
 
 interface CategoryViewProps {
   category: string;
   onBack: () => void;
-  setCartItems: (items: any) => void;
+  onProductClick?: (product: Product) => void;
 }
 
-export default function CategoryView({ category: initialCategory, onBack, setCartItems }: CategoryViewProps) {
-  const [currentCategory, setCurrentCategory] = useState(initialCategory);
 
-  // Mock products based on category
-  const products = [
-    { id: 101, name: 'Spectra-X Ultra 4K', price: 1599, category: 'Drones', image: 'https://images.unsplash.com/photo-1473963484295-11f8cdb29479?auto=format&fit=crop&q=80&w=1920&h=1080' },
-    { id: 102, name: 'Swift-Blade Racer', price: 899, category: 'Drones', image: 'https://images.unsplash.com/photo-1524143924104-58682054b8d7?auto=format&fit=crop&q=80&w=1920&h=1080' },
-    { id: 103, name: 'Vortex Motor Kit', price: 299, category: 'Robo Toys', image: 'https://images.unsplash.com/photo-1558444479-2706fa58b8c6?auto=format&fit=crop&q=80&w=1920&h=1080' },
-    { id: 104, name: 'Titan 4WD Rover', price: 1299, category: 'RC Cars', image: 'https://images.unsplash.com/photo-1531693251400-38df35776dc7?auto=format&fit=crop&q=80&w=1920&h=1080' },
-    { id: 105, name: 'B12-X Neural Core', price: 499, category: '3D Models', image: 'https://images.unsplash.com/photo-1581092334651-ddf26d9a1930?auto=format&fit=crop&q=80&w=1920&h=1080' },
-    { id: 106, name: 'Alpha-Bot Chassis', price: 199, category: 'Robo Toys', image: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?auto=format&fit=crop&q=80&w=1920&h=1080' },
-  ].filter(p => currentCategory === 'All' || p.category === currentCategory);
 
-  const addToCart = (product: any) => {
-    setCartItems((prev: any) => {
-      const existing = prev.find((item: any) => item.id === product.id);
-      if (existing) {
-        return prev.map((item: any) => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
+
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  images: string[];
+  category: { _id: string, name: string } | string;
+  stock: number;
+  rating?: number;
+  numReviews?: number;
+}
+
+export default function CategoryView({ category: initialCategory, onBack, onProductClick }: CategoryViewProps) {
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
+  
+  const handleWishlistClick = async (e: React.MouseEvent, productId: string) => {
+    e.stopPropagation();
+    if (!user) {
+      showToast('Please sign in to add items to your wishlist', 'info');
+      return;
+    }
+
+    const isWishlisted = wishlistIds.includes(productId);
+
+    try {
+      const token = localStorage.getItem('insforgeToken');
+      const method = isWishlisted ? 'DELETE' : 'POST';
+      const url = isWishlisted 
+        ? `http://localhost:5000/api/wishlist/${productId}` 
+        : 'http://localhost:5000/api/wishlist';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: isWishlisted ? null : JSON.stringify({ productId })
+      });
+
+      if (response.ok) {
+        if (isWishlisted) {
+          setWishlistIds(prev => prev.filter(id => id !== productId));
+          showToast('Removed from wishlist', 'success');
+        } else {
+          setWishlistIds(prev => [...prev, productId]);
+          showToast('Added to wishlist', 'success');
+        }
       }
-      return [...prev, { ...product, qty: 1 }];
-    });
+    } catch (error) {
+      console.error('Wishlist error:', error);
+    }
   };
+
+  const [currentCategory, setCurrentCategory] = useState(initialCategory);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      if (user) {
+        try {
+          const token = localStorage.getItem('insforgeToken');
+          const res = await fetch('http://localhost:5000/api/wishlist', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (res.ok) setWishlistIds(data.products?.map((p: Product) => p._id) || []);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    };
+    fetchWishlist();
+  }, [user]);
+
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:5000/api/products');
+        const data = await response.json();
+        if (response.ok) {
+          setAllProducts(data);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  const products = allProducts.filter(p => {
+    const catName = typeof p.category === 'object' ? p.category.name : p.category;
+    const categoryMatch = currentCategory === 'All' || catName === currentCategory;
+    const searchMatch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return categoryMatch && searchMatch;
+  });
+
+
 
   return (
     <motion.div 
@@ -58,6 +149,8 @@ export default function CategoryView({ category: initialCategory, onBack, setCar
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-primary transition-colors" size={18} />
             <input 
               type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={`Search in ${currentCategory}...`}
               className="w-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] focus:border-primary px-12 py-4 rounded-2xl text-[var(--text-main)] placeholder-[var(--text-muted)] outline-none transition-all"
             />
@@ -72,7 +165,7 @@ export default function CategoryView({ category: initialCategory, onBack, setCar
                 <Filter size={14} /> Categories
               </h3>
               <div className="space-y-1">
-                {['All', 'Robo Toys', 'Drones', 'RC Cars', '3D Models'].map((cat) => (
+                {['All', 'Robo Toys', 'Drones', 'RC Vehicles', '3D Models'].map((cat) => (
                   <button 
                     key={cat}
                     onClick={() => setCurrentCategory(cat)}
@@ -104,67 +197,101 @@ export default function CategoryView({ category: initialCategory, onBack, setCar
               </div>
             </div>
 
-            {/* Product Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {products.map((product) => (
-                <motion.div 
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="bg-[var(--bg-primary)] rounded-[2.5rem] border border-[var(--border-subtle)] overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-2xl transition-all duration-500 group flex flex-col"
-                >
-                  {/* Image Section - 1920x1080 Aspect Ratio */}
-                  <div className="relative aspect-[1920/1080] bg-[var(--bg-secondary)]/30 overflow-hidden flex items-center justify-center">
-                    <img 
-                      src={product.image} 
-                      alt={product.name} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    {/* Floating Level Badge */}
-                    <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md px-3 py-1 rounded-full border border-primary/10">
-                      <p className="text-[8px] font-black text-primary uppercase tracking-tighter">Pro Grade</p>
-                    </div>
-                  </div>
-
-                  {/* Content Section */}
-                  <div className="p-6 sm:p-8 flex-1 flex flex-col space-y-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[9px] font-bold uppercase tracking-widest border border-blue-100">
-                          {product.category}
-                        </span>
-                        <span className="w-1 h-1 bg-[var(--text-muted)] rounded-full opacity-30" />
-                        <span className="text-[var(--text-muted)] text-[9px] font-bold uppercase tracking-widest">In Stock</span>
+            {/* Product Grid / Empty State */}
+            {loading ? (
+              <div className="flex justify-center py-24"><div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
+            ) : products.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                {products.map((product) => (
+                  <motion.div 
+                    key={product._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="bg-[var(--bg-primary)] rounded-[2.5rem] border border-[var(--border-subtle)] overflow-hidden shadow-[var(--card-shadow)] hover:shadow-2xl transition-all duration-500 group flex flex-col card-premium"
+                  >
+                    <div className="relative aspect-[1920/1080] bg-[var(--bg-secondary)]/30 overflow-hidden flex items-center justify-center">
+                      <img 
+                        src={product.images[0] || ''} 
+                        alt={product.name} 
+                        onClick={() => onProductClick?.(product)}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 cursor-pointer"
+                      />
+                      <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md px-3 py-1 rounded-full border border-primary/10">
+                        <p className="text-[8px] font-black text-primary uppercase tracking-tighter">Pro Grade</p>
                       </div>
-                      <h3 className="text-xl font-bold text-[var(--text-main)] font-display leading-tight group-hover:text-primary transition-colors">
-                        {product.name}
-                      </h3>
                     </div>
 
-                    <div className="space-y-4">
-                      <div className="flex items-end gap-3">
-                        <span className="text-2xl font-black text-[var(--text-main)] font-display tracking-tight">₹{product.price}</span>
-                        <span className="text-[var(--text-muted)] line-through text-xs font-medium mb-1">₹{(product.price * 1.4).toFixed(0)}</span>
-                        <span className="text-green-500 text-[10px] font-bold mb-1 ml-auto">Free Shipping</span>
+                    <div className="p-6 sm:p-8 flex-1 flex flex-col space-y-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[9px] font-bold uppercase tracking-widest border border-blue-100">
+                            {typeof product.category === 'object' ? product.category.name : product.category}
+                          </span>
+                          <span className="flex items-center gap-1 text-green-500 text-[9px] font-bold uppercase tracking-widest">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                            In Stock
+                          </span>
+                        </div>
+                        <h3 className="text-xl font-bold text-[var(--text-main)] group-hover:text-primary transition-colors line-clamp-2">
+                          {product.name}
+                        </h3>
+                        <div className="flex items-baseline gap-2 mt-4">
+                          <span className="text-2xl font-black text-[var(--text-main)] font-display tracking-tight">₹{product.price}</span>
+                          {product.originalPrice && (
+                            <span className="text-sm text-[var(--text-muted)] line-through opacity-50 font-display">
+                              ₹{product.originalPrice}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex gap-3 pt-2">
-                        <button className="flex-1 py-3.5 rounded-2xl bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] font-bold text-xs transition-all active:scale-95">
-                          Details
+                        <button 
+                          onClick={(e) => handleWishlistClick(e, product._id)}
+                          className="flex-1 py-3.5 rounded-2xl bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] font-black text-[10px] transition-all active:scale-95 uppercase tracking-widest btn-premium flex items-center justify-center gap-2"
+                        >
+                          <Heart size={14} className={wishlistIds.includes(product._id) ? "text-red-500 fill-red-500" : "text-red-500"} />
+                          Wishlist
                         </button>
                         <button 
-                          onClick={() => addToCart(product)}
-                          className="flex-[1.5] py-3.5 rounded-2xl bg-gradient-to-r from-primary to-orange-600 hover:from-orange-600 hover:to-orange-500 text-white font-bold text-xs shadow-lg shadow-primary/20 transition-all active:scale-95"
+                          onClick={() => onProductClick?.(product)}
+                          className="flex-[1.5] py-3.5 rounded-2xl bg-gradient-to-r from-primary to-orange-600 hover:from-orange-600 hover:to-orange-500 text-white font-black text-[10px] shadow-lg shadow-primary/20 transition-all active:scale-95 uppercase tracking-widest btn-premium"
                         >
-                          Add to Cart
+                          View more
                         </button>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                {currentCategory === 'Drones' ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="max-w-md"
+                  >
+                    <div className="w-64 h-64 mb-8 mx-auto relative group">
+                      <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-50 group-hover:scale-75 transition-transform duration-700" />
+                      <div className="relative w-full h-full flex items-center justify-center opacity-40 grayscale group-hover:grayscale-0 transition-all duration-700">
+                        <Plane size={120} className="text-primary rotate-45" />
+                      </div>
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                        <span className="bg-primary text-white font-black px-4 py-1 rounded-full text-[10px] uppercase tracking-widest shadow-xl shadow-primary/40 whitespace-nowrap">
+                          Coming Soon
+                        </span>
+                      </div>
+                    </div>
+                    <h2 className="text-3xl font-black text-[var(--text-main)] mb-4 font-display">Aerial Innovation</h2>
+                    <p className="text-[var(--text-muted)] text-sm leading-relaxed">Our next generation of high-performance drones is currently in production. Stay tuned for the launch event.</p>
+                  </motion.div>
+                ) : (
+                  <p className="text-[var(--text-muted)]">No products found in this category.</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

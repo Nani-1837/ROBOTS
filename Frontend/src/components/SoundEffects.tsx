@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 
-const CLICK_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2567/2567-preview.mp3'; // Heavy Mech Click
-const HOVER_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2541/2541-preview.mp3'; // Servo/Vibration Hum
+const CLICK_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'; // Lighter Pop Sound
+const HOVER_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'; // Subtle hover
 
 export default function SoundEffects() {
   useEffect(() => {
-    const playSound = (url: string, volume = 1.0) => {
+    const playSound = (url: string, volume = 0.1) => {
       const audio = new Audio(url);
       audio.volume = volume;
       audio.play().catch(() => {});
@@ -14,15 +14,14 @@ export default function SoundEffects() {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest('button') || target.closest('a') || target.closest('li')) {
-        playSound(CLICK_SOUND, 1.0); // Full volume click
+        playSound(CLICK_SOUND, 0.1); // Reduced volume click
       }
     };
 
     const handleHover = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      // Target navbar links, buttons, and list items
       if (target.closest('button') || target.closest('a') || target.closest('li')) {
-        playSound(HOVER_SOUND, 1.0); // Maximum volume for robotic vibration hover
+        playSound(HOVER_SOUND, 0.05); // Very subtle hover
       }
     };
 

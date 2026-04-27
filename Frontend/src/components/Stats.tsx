@@ -1,7 +1,7 @@
 import { useInView } from 'framer-motion';
 import { useRef, useEffect, useState } from 'react';
 
-const CountUp = ({ value, duration = 2 }) => {
+const CountUp = ({ value, duration = 2 }: any) => {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });

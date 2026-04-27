@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Star, Quote, User } from 'lucide-react';
+import { Star, Quote } from 'lucide-react';
 
 const testimonials = [
   {
@@ -71,9 +71,6 @@ export default function Testimonials() {
               </p>
               
               <div className="flex items-center gap-4 border-t border-[var(--border-subtle)] pt-6">
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/20">
-                  <img src={t.avatar} alt={t.name} className="w-full h-full object-cover" />
-                </div>
                 <div>
                   <h4 className="text-[var(--text-main)] font-bold text-sm font-display">{t.name}</h4>
                   <p className="text-primary text-[10px] font-bold uppercase tracking-widest">{t.role}</p>

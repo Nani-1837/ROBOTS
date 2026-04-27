@@ -1,8 +1,18 @@
-import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import herosectionImage from '../assets/herosection.png';
 
 export default function Hero({ setCurrentView, setActiveCategory }: { setCurrentView: any, setActiveCategory: any }) {
+  const [index, setIndex] = useState(0);
+  const words = ["Robots", "Drones", "Cars", "3D Models"];
+  const colors = ["#FF6B00", "#007AFF", "#8B5CF6", "#800000"];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % words.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
 
   const scrollToAbout = () => {
     const element = document.getElementById('about');
@@ -12,7 +22,7 @@ export default function Hero({ setCurrentView, setActiveCategory }: { setCurrent
   };
 
   const exploreAll = () => {
-    setActiveCategory('All Products');
+    setActiveCategory('All');
     setCurrentView('category');
   };
 
@@ -48,18 +58,31 @@ export default function Hero({ setCurrentView, setActiveCategory }: { setCurrent
       />
 
       {/* Content Container */}
-      <div className="relative z-20 w-full max-w-7xl mx-auto px-6 text-center mt-4">
+      <div className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 text-center mt-4 sm:mt-10">
         
         {/* Main Heading */}
         <motion.h1 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="font-sans text-4xl sm:text-6xl md:text-[5.5rem] font-black tracking-tight leading-[1.1] mb-6 text-[var(--text-main)] font-display tracking-tighter"
+          className="font-sans text-[2.5rem] leading-[1.05] sm:text-6xl md:text-[5rem] font-bold tracking-tight mb-6 text-[var(--text-main)] font-display"
         >
-          Next-Gen Robotics Ecosystem <br />
-          <span className="text-primary">
-            The Future is Here.
+          Engineering <br />
+          Intelligent{" "}
+          <span className="relative inline-block h-[1.1em] min-w-[140px] xs:min-w-[180px] sm:min-w-[220px] md:min-w-[320px] align-top text-left ml-1 sm:ml-2">
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={index}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -20, opacity: 0 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                style={{ color: colors[index % colors.length] }}
+                className="absolute left-0 top-0 whitespace-nowrap"
+              >
+                {words[index]}
+              </motion.span>
+            </AnimatePresence>
           </span>
         </motion.h1>
 
@@ -68,9 +91,11 @@ export default function Hero({ setCurrentView, setActiveCategory }: { setCurrent
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-          className="max-w-2xl mx-auto text-[var(--text-muted)] text-sm sm:text-base md:text-lg font-normal mb-8 leading-relaxed"
+          style={{ color: '#6B7280' }}
+          className="max-w-xl mx-auto text-sm sm:text-base md:text-lg font-medium mb-8 sm:mb-10 leading-relaxed px-2"
         >
-          Experience <span className="font-medium">high-performance drones</span>, <span className="font-medium">AI-powered RC cars</span>, and premium 3D models engineered for enthusiasts and professionals.
+          BISONIX builds advanced robots, drones, and RC systems <br className="hidden md:block" />
+          for real-world performance and innovation.
         </motion.p>
 
         {/* CTAs */}
@@ -78,26 +103,23 @@ export default function Hero({ setCurrentView, setActiveCategory }: { setCurrent
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-6"
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mb-6 px-4"
         >
           <button 
-            onClick={scrollToAbout}
-            className="w-full sm:w-auto px-6 py-3 rounded-full bg-[var(--text-main)]/5 hover:bg-[var(--text-main)]/10 text-[var(--text-main)] font-medium text-sm sm:text-base transition-colors flex items-center justify-center cursor-none border border-[var(--text-main)]/10"
+            onClick={exploreAll}
+            className="w-full sm:w-auto px-10 py-4 rounded-xl bg-primary text-white font-bold text-sm transition-all hover:bg-orange-600 shadow-xl shadow-primary/10 active:scale-95"
           >
-            Watch Video
+            Explore
           </button>
           
           <button 
-            onClick={exploreAll}
-            className="w-full sm:w-auto px-6 py-3 rounded-full bg-gradient-to-r from-primary to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-medium text-sm sm:text-base transition-colors shadow-[0_4px_14px_0_rgba(255,106,0,0.39)] flex items-center justify-center gap-2 cursor-none"
+            onClick={scrollToAbout}
+            className="w-full sm:w-auto px-10 py-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] hover:border-[var(--text-main)]/20 text-[var(--text-main)] font-bold text-sm transition-all active:scale-95"
           >
-            Explore Collection
-            <ArrowRight size={18} />
+            Watch Demo
           </button>
         </motion.div>
       </div>
-
-      {/* End Content Container */}
 
       {/* Hero Image */}
       <motion.div 

@@ -6,7 +6,7 @@ import robotModel from '../assets/b12_robot.glb';
 
 import { useFrame } from '@react-three/fiber';
 
-function Model(props) {
+function Model(props: any) {
   const { scene } = useGLTF(robotModel);
   const modelRef = useRef<any>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -31,7 +31,7 @@ function Model(props) {
   return <primitive ref={modelRef} object={scene} scale={isMobile ? 0.35 : 0.5} {...props} />;
 }
 
-const Hotspot = ({ x, y, title, specs, delay, side = 'right' }) => (
+const Hotspot = ({ x, y, title, specs, delay, side = 'right' }: any) => (
   <motion.div 
     initial={{ opacity: 0, scale: 0 }}
     whileInView={{ opacity: 1, scale: 1 }}
@@ -65,7 +65,7 @@ const Hotspot = ({ x, y, title, specs, delay, side = 'right' }) => (
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-orange-500 rounded-t-xl opacity-50" />
         <h4 className="text-[var(--text-main)] font-black text-xs uppercase tracking-wider mb-2 font-display">{title}</h4>
         <div className="space-y-1.5">
-          {specs.map((spec, i) => (
+          {specs.map((spec: any, i: number) => (
             <div key={i} className="flex justify-between items-center gap-4 text-[10px]">
               <span className="text-[var(--text-muted)] uppercase">{spec.label}</span>
               <span className="text-primary font-bold">{spec.value}</span>
@@ -106,7 +106,7 @@ export default function Showcase() {
           whileInView={{ opacity: 1, y: 0 }}
           className="text-primary font-bold tracking-[0.2em] uppercase text-sm mb-4 block"
         >
-          The Flagship Evolution
+          The Robot Version-1.O
         </motion.span>
         <motion.h2 
           initial={{ opacity: 0, y: 20 }}
@@ -114,7 +114,7 @@ export default function Showcase() {
           transition={{ delay: 0.1 }}
           className="text-5xl md:text-7xl font-bold font-display text-[var(--text-main)]"
         >
-          B12-Robot <span className="text-[var(--text-muted)] italic font-light">Custom</span>
+          Bisonix-1.O <span className="text-[var(--text-muted)] italic font-light"></span>
         </motion.h2>
       </div>
 
@@ -124,7 +124,7 @@ export default function Showcase() {
         initial={typeof window !== 'undefined' && window.innerWidth < 768 
           ? { opacity: 0 } 
           : { x: -300, opacity: 0, rotateY: -90 }}
-        whileInView={{ x: 0, opacity: 1, rotateY: 0 }}
+        whileInView={{ x: 0, opacity: 1, rotateY: 0 }}  
         viewport={{ once: true, margin: "-100px" }}
         transition={{ 
           type: "spring",
@@ -153,9 +153,9 @@ export default function Showcase() {
               side="left"
               title="Autonomous Core" 
               specs={[
-                { label: 'Neural Unit', value: 'B12-X' },
-                { label: 'Cores', value: '12-NPU' },
-                { label: 'Pathfinding', value: 'AI-V4' }
+                { label: 'Neural Unit', value: 'Soon' },
+                { label: 'Cores', value: 'Soon' },
+                { label: 'Pathfinding', value: 'Soon' }
               ]}
               delay={1.5}
             />
@@ -164,9 +164,9 @@ export default function Showcase() {
               side="right"
               title="Scanner Module" 
               specs={[
-                { label: 'Type', value: 'LIDAR-8K' },
-                { label: 'FOV', value: '360°' },
-                { label: 'Range', value: '50M' }
+                { label: 'Type', value: 'Soon' },
+                { label: 'FOV', value: 'Soon' },
+                { label: 'Range', value: 'Soon' }
               ]}
               delay={1.7}
             />
@@ -175,9 +175,9 @@ export default function Showcase() {
               side="right"
               title="Magnetic Grapple" 
               specs={[
-                { label: 'Force', value: '250N' },
-                { label: 'Material', value: 'ND-52' },
-                { label: 'Speed', value: '0.1S' }
+                { label: 'Force', value: 'Soon' },
+                { label: 'Material', value: 'Soon' },
+                { label: 'Speed', value: 'Soon' }
               ]}
               delay={1.9}
             />
@@ -188,10 +188,10 @@ export default function Showcase() {
       {/* Stats Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-32 max-w-4xl mx-auto w-full px-6">
         {[
-          { label: 'Battery Life', value: '72 HOURS' },
-          { label: 'Weight', value: '1.2 KG' },
-          { label: 'Sensors', value: 'LIDAR-X' },
-          { label: 'Compatibility', value: 'STRAY-V1' },
+          { label: 'Battery Life', value: '----' },
+          { label: 'Weight', value: '----' },
+          { label: 'Sensors', value: '-----' },
+          { label: 'Compatibility', value: '------' },
         ].map((stat, i) => (
           <motion.div 
             key={i}

@@ -2,12 +2,14 @@ import { motion } from 'framer-motion';
 import { Plane, Car, Cuboid, Zap, Cpu, ShieldCheck } from 'lucide-react';
 
 
+
 // Import images
-import droneImg from '../assets/drone_feature.png';
-import carImg from '../assets/car_feature.png';
-import modelImg from '../assets/model_feature.png';
+import aiDroneImg from '../assets/AI-Powered Drones.jpg';
+import highPerfCarImg from '../assets/High-Performance RC Vehicles.jpg';
+import precision3DImg from '../assets/Precision 3D Models.jpg';
 
 export default function Features() {
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -78,7 +80,7 @@ export default function Features() {
             viewport={{ once: true }}
             className="text-4xl md:text-5xl lg:text-6xl font-bold font-display tracking-tight text-[var(--text-main)] mb-6"
           >
-            Engineering the <span className="text-orange-500">Autonomous Future</span>
+            Build the Future of <span className="text-orange-500">Autonomous Machines</span>
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -87,7 +89,7 @@ export default function Features() {
             transition={{ delay: 0.1 }}
             className="text-[var(--text-muted)] max-w-2xl mx-auto text-sm md:text-base leading-relaxed"
           >
-            Explore our ecosystem of high-performance robotics, engineered with precision and powered by next-generation artificial intelligence.
+            High-performance drones, intelligent RC systems, and precision 3D models — powered by next-gen AI.
           </motion.p>
         </div>
 
@@ -97,7 +99,7 @@ export default function Features() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto"
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto"
         >
           {/* Card 1: Drones */}
           <motion.div variants={itemVariants}>
@@ -105,7 +107,7 @@ export default function Features() {
               {/* Image Section */}
               <div className="relative aspect-[1920/1080] bg-[var(--bg-secondary)]/30 overflow-hidden flex items-center justify-center">
                 <img 
-                  src={droneImg} 
+                  src={aiDroneImg} 
                   alt="AI Drone" 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
@@ -119,19 +121,19 @@ export default function Features() {
                       <Plane size={16} />
                     </div>
                     <span className="px-2 py-0.5 bg-primary/5 text-primary rounded text-[9px] font-bold uppercase tracking-widest border border-primary/10">
-                      Aerial Tech
+                      Fast. Precise. Autonomous.
                     </span>
                   </div>
                   <h3 className="text-xl font-bold text-[var(--text-main)] font-display leading-tight group-hover:text-primary transition-colors">
                     AI-Powered Drones
                   </h3>
                   <p className="text-[var(--text-muted)] text-sm leading-relaxed mt-3">
-                    Experience unmatched aerial maneuverability with our autonomous drone fleet.
+                    Built for high-speed aerial intelligence and real-time tracking.
                   </p>
                 </div>
 
                 <div className="flex flex-wrap gap-2 pt-2">
-                  <span className="px-3 py-1.5 rounded-full bg-primary/5 text-[9px] font-bold text-primary border border-primary/10">80km/h Speed</span>
+                  <span className="px-3 py-1.5 rounded-full bg-primary/5 text-[9px] font-bold text-primary border border-primary/10">30-40 km/h Speed</span>
                   <span className="px-3 py-1.5 rounded-full bg-[var(--text-main)]/5 text-[9px] font-bold text-[var(--text-muted)] border border-[var(--border-subtle)]">AI Tracking</span>
                 </div>
               </div>
@@ -144,7 +146,7 @@ export default function Features() {
               {/* Image Section */}
               <div className="relative aspect-[1920/1080] bg-[var(--bg-secondary)]/30 overflow-hidden flex items-center justify-center">
                 <img 
-                  src={carImg} 
+                  src={highPerfCarImg} 
                   alt="Smart RC Vehicle" 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
@@ -162,16 +164,16 @@ export default function Features() {
                     </span>
                   </div>
                   <h3 className="text-xl font-bold text-[var(--text-main)] font-display leading-tight group-hover:text-blue-500 transition-colors">
-                    Smart RC Vehicles
+                    High-Performance RC Vehicles
                   </h3>
                   <p className="text-[var(--text-muted)] text-sm leading-relaxed mt-3">
-                    Tackle any terrain with advanced torque vectoring systems.
+                    Engineered for extreme terrain with advanced control systems.
                   </p>
                 </div>
 
                 <div className="flex flex-wrap gap-2 pt-2">
-                  <span className="px-3 py-1.5 rounded-full bg-blue-500/5 text-[9px] font-bold text-blue-500 border border-blue-500/10">All-Terrain</span>
-                  <span className="px-3 py-1.5 rounded-full bg-[var(--text-main)]/5 text-[9px] font-bold text-[var(--text-muted)] border border-[var(--border-subtle)]">Vectoring</span>
+                  <span className="px-3 py-1.5 rounded-full bg-blue-500/5 text-[9px] font-bold text-blue-500 border border-blue-500/10">All-Terrain Capability</span>
+                  <span className="px-3 py-1.5 rounded-full bg-[var(--text-main)]/5 text-[9px] font-bold text-[var(--text-muted)] border border-[var(--border-subtle)]">Torque Vectoring</span>
                 </div>
               </div>
             </div>
@@ -183,7 +185,7 @@ export default function Features() {
               {/* Image Section */}
               <div className="relative aspect-[1920/1080] bg-[var(--bg-secondary)]/30 overflow-hidden flex items-center justify-center">
                 <img 
-                  src={modelImg} 
+                  src={precision3DImg} 
                   alt="3D Models" 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
@@ -201,22 +203,24 @@ export default function Features() {
                     </span>
                   </div>
                   <h3 className="text-xl font-bold text-[var(--text-main)] font-display leading-tight group-hover:text-purple-500 transition-colors">
-                    Premium 3D Models
+                    Precision 3D Models
                   </h3>
                   <p className="text-[var(--text-muted)] text-sm leading-relaxed mt-3">
-                    Precision-engineered parts for customizations and repairs instantly.
+                    Industry-grade designs for customization, prototyping, and repairs.
                   </p>
                 </div>
 
                 <div className="flex flex-wrap gap-2 pt-2">
-                  <span className="px-3 py-1.5 rounded-full bg-purple-500/5 text-[9px] font-bold text-purple-500 border border-purple-500/10">STL / OBJ</span>
-                  <span className="px-3 py-1.5 rounded-full bg-[var(--text-main)]/5 text-[9px] font-bold text-[var(--text-muted)] border border-[var(--border-subtle)]">Industry Grade</span>
+                  <span className="px-3 py-1.5 rounded-full bg-purple-500/5 text-[9px] font-bold text-purple-500 border border-purple-500/10">STL / OBJ Formats</span>
+                  <span className="px-3 py-1.5 rounded-full bg-[var(--text-main)]/5 text-[9px] font-bold text-[var(--text-muted)] border border-[var(--border-subtle)]">Industry Grade Quality</span>
                 </div>
               </div>
             </div>
           </motion.div>
+
           
         </motion.div>
+
 
 
       </div>

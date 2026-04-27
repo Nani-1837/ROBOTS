@@ -6,10 +6,10 @@ interface CartDrawerProps {
   onClose: () => void;
   cartItems: any[];
   setCartItems: (items: any[]) => void;
+  setCurrentView: (view: any) => void;
 }
 
-export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems }: CartDrawerProps) {
-  
+export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems, setCurrentView }: CartDrawerProps) {
   const handleQtyChange = (id: number, delta: number) => {
     setCartItems(cartItems.map(item => 
       item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item
@@ -23,10 +23,9 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems }:
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.qty, 0);
 
   const handleCheckout = () => {
-    const number = "7995232673";
-    const itemDetails = cartItems.map(item => `- ${item.name} (x${item.qty}): ₹${item.price * item.qty}`).join('%0A');
-    const message = `Hello BISONIX! I would like to place an order:%0A%0A${itemDetails}%0A%0A*Total: ₹${subtotal.toLocaleString()}*%0A%0APlease let me know the next steps.`;
-    window.open(`https://wa.me/${number}?text=${message}`, '_blank');
+    if (cartItems.length === 0) return;
+    setCurrentView('checkout');
+    onClose();
   };
 
   return (
@@ -83,29 +82,26 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems }:
                     </div>
                     <div className="flex-1 flex flex-col justify-between py-1">
                       <div>
-                        <h3 className="text-[var(--text-main)] font-bold text-sm mb-1">{item.name}</h3>
-                        <p className="text-primary font-bold text-sm">₹{item.price}</p>
+                        <h3 className="text-[var(--text-main)] font-bold text-sm mb-0.5">{item.name}</h3>
+                        {item.color && (
+                          <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-1.5">
+                            <span className="inline-block w-2.5 h-2.5 rounded-full border border-[var(--border-subtle)]" style={{ backgroundColor: item.color?.toLowerCase() === 'white' ? '#fff' : item.color?.toLowerCase() === 'black' ? '#000' : item.color }} />
+                            {item.color}
+                          </p>
+                        )}
+                        <p className="text-primary font-bold text-sm mt-1">₹{item.price.toLocaleString()}</p>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3 bg-[var(--bg-secondary)] rounded-lg px-2 py-1 border border-[var(--border-subtle)]">
-                          <button 
-                            onClick={() => handleQtyChange(item.id, -1)}
-                            className="text-[var(--text-muted)] hover:text-primary transition-colors"
-                          >
+                          <button onClick={() => handleQtyChange(item.id, -1)} className="text-[var(--text-muted)] hover:text-primary transition-colors">
                             <Minus size={14} />
                           </button>
                           <span className="text-[var(--text-main)] text-xs font-bold w-4 text-center">{item.qty}</span>
-                          <button 
-                            onClick={() => handleQtyChange(item.id, 1)}
-                            className="text-[var(--text-muted)] hover:text-primary transition-colors"
-                          >
+                          <button onClick={() => handleQtyChange(item.id, 1)} className="text-[var(--text-muted)] hover:text-primary transition-colors">
                             <Plus size={14} />
                           </button>
                         </div>
-                        <button 
-                          onClick={() => handleRemove(item.id)}
-                          className="text-red-500/50 hover:text-red-500 transition-colors"
-                        >
+                        <button onClick={() => handleRemove(item.id)} className="text-red-500/50 hover:text-red-500 transition-colors">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -118,16 +114,14 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems }:
             {/* Footer */}
             <div className="p-6 border-t border-[var(--border-subtle)] bg-[var(--bg-secondary)]/50 space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-[var(--text-muted)] text-sm uppercase tracking-wider font-semibold">Subtotal</span>
-                <span className="text-[var(--text-main)] text-xl font-bold font-display">₹{subtotal.toLocaleString()}</span>
+                <span className="text-[var(--text-muted)] text-sm uppercase tracking-wider font-bold">Subtotal</span>
+                <span className="text-[var(--text-main)] text-2xl font-black font-display">₹{subtotal.toLocaleString()}</span>
               </div>
-              <p className="text-[var(--text-muted)] text-xs leading-relaxed text-center">
-                Shipping and taxes calculated at checkout. Secure 256-bit encrypted transaction.
-              </p>
+              <p className="text-[10px] text-[var(--text-muted)] text-center">🎟 Apply coupon codes at checkout for discounts</p>
               <button 
                 disabled={cartItems.length === 0}
                 onClick={handleCheckout}
-                className="w-full bg-primary hover:bg-orange-600 disabled:opacity-50 disabled:hover:bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+                className="w-full bg-primary hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
               >
                 Proceed to Checkout
               </button>

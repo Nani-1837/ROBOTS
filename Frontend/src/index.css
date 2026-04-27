@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
 
 @theme {
   --color-primary: #FF6A00;
@@ -44,4 +46,47 @@ h1, h2, h3, h4, h5, h6 {
 /* Restore default cursor on interactive elements */
 a, button, input, select, textarea, .cursor-pointer {
   cursor: pointer !important;
+}
+
+/* Micro-interactions */
+.btn-premium {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-premium:active {
+  transform: scale(0.95);
+}
+
+.card-premium {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-premium:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px -15px rgba(255, 106, 0, 0.15);
+}
+
+/* Skeleton Loader Shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, 
+    var(--bg-secondary) 25%, 
+    rgba(255,106,0,0.05) 50%, 
+    var(--bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Smooth Image Loading */
+img {
+  transition: opacity 0.5s ease-in-out;
+}
+img[loading] {
+  opacity: 0;
+}
+img.loaded {
+  opacity: 1;
 }

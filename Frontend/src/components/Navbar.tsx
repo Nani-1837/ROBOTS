@@ -1,12 +1,26 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Menu, Sun, Moon, ChevronDown, ChevronRight, X } from 'lucide-react';
+import { ShoppingCart, Menu, Sun, Moon, ChevronDown, ChevronRight, X, LogOut, Settings, User as UserIcon, Bell, Ticket, MoreVertical } from 'lucide-react';
 import logo from '../assets/logo.png';
 import AuthModal from './AuthModal';
 import CartDrawer from './CartDrawer';
 import SearchOverlay from './SearchOverlay';
+import dronesImg from '../assets/Drones.jpg';
+import carsImg from '../assets/Cars.jpg';
+import robotsImg from '../assets/Robots.jpg';
+import collegeProjectsImg from '../assets/College-Projects.jpg';
+import customBuildsImg from '../assets/Custom Builds.jpg';
+import { useAuth } from '../context/AuthContext';
 
-export default function Navbar({ cartItems, setCartItems, setActiveCategory, setCurrentView }) {
+interface NavbarProps {
+  cartItems: any[];
+  setCartItems: (items: any[]) => void;
+  setActiveCategory: (cat: string | null) => void;
+  setCurrentView: (view: any) => void;
+  setSelectedProduct: (product: any) => void;
+}
+
+export default function Navbar({ cartItems, setCartItems, setActiveCategory, setCurrentView, setSelectedProduct }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -15,6 +29,46 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
   const [isDark, setIsDark] = useState(false); // Default to Light Mode
   const [activeItem, setActiveItem] = useState<string | null>(null);
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  const { user, logout } = useAuth();
+
+  const fetchNotifications = async () => {
+    if (!user) return;
+    try {
+      const token = localStorage.getItem('insforgeToken');
+      const res = await fetch('http://localhost:5000/api/notifications', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) setNotifications(data);
+    } catch (err) { console.error(err); }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const markNotificationAsRead = async (id: string) => {
+    try {
+      const token = localStorage.getItem('insforgeToken');
+      await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      fetchNotifications();
+    } catch (err) { console.error(err); }
+  };
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+  
+  useEffect(() => {
+    if (user) console.log('Current User in Navbar:', user);
+  }, [user]);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -43,36 +97,84 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navLinks = [
-    { name: 'Robo Toys', href: '#' },
-    { name: 'Drones', href: '#' },
-    { name: 'RC Cars', href: '#' },
-    { name: '3D Models', href: '#' },
-    { name: 'Services', href: '#', hasDropdown: true },
-    { name: 'Track Order', href: '#' },
-    { name: 'Contact Us', href: '#' },
+  const [dynamic3DProducts, setDynamic3DProducts] = useState<any[]>([]);
+
+  interface NavLink {
+    name: string;
+    href?: string;
+    hasDropdown?: boolean;
+  }
+
+  const navLinks: NavLink[] = [
+    { name: 'Products', hasDropdown: true },
+    ...(dynamic3DProducts.length > 0 ? [{ name: '3D Solutions', hasDropdown: true }] : []),
+    { name: 'Services', hasDropdown: true },
+    { name: 'Contact', href: '#' },
   ];
 
-  const megaMenuContent = {
-    'Robo Toys': [
-      { name: 'Alpha-Bot', image: 'https://images.unsplash.com/photo-1535378917042-10a22c95931a?auto=format&fit=crop&q=80&w=200' },
-      { name: 'Vortex Motor', image: 'https://images.unsplash.com/photo-1558444479-2706fa58b8c6?auto=format&fit=crop&q=80&w=200' },
-      { name: 'B12-X Core', image: 'https://images.unsplash.com/photo-1581092334651-ddf26d9a1930?auto=format&fit=crop&q=80&w=200' },
+  // Add Admin Link if user is admin
+  if (user?.role === 'admin') {
+    navLinks.push({ name: 'Admin Panel', href: '#', hasDropdown: false });
+  }
+
+  const fetch3D = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/products');
+      const data = await res.json();
+      if (res.ok) {
+        const filtered = data.filter((p: any) => {
+          const catName = typeof p.category === 'object' ? p.category.name : p.category;
+          return catName?.toLowerCase().includes('3d');
+        });
+        setDynamic3DProducts(filtered.map((p: any) => ({
+          name: p.name,
+          image: p.images?.[0] || '',
+          view: 'product-detail', // Use product detail view
+          product: p, // Pass the whole product object
+          category: typeof p.category === 'object' ? p.category.name : p.category
+        })));
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  useEffect(() => {
+    fetch3D();
+  }, []);
+
+  const sidebarLinks: Record<string, any[]> = {
+    'Products': [
+      { name: 'New Arrivals', view: 'category', cat: 'Robo Toys' },
+      { name: 'Best Sellers', view: 'category', cat: 'Drones' },
+      { name: 'Support', view: 'contact' }
     ],
-    'Drones': [
-      { name: 'Spectra-X', image: 'https://images.unsplash.com/photo-1473963484295-11f8cdb29479?auto=format&fit=crop&q=80&w=200' },
-      { name: 'Swift-Blade', image: 'https://images.unsplash.com/photo-1524143924104-58682054b8d7?auto=format&fit=crop&q=80&w=200' },
-      { name: 'Nano Racer', image: 'https://images.unsplash.com/photo-1506941433945-99a2aa4bd50a?auto=format&fit=crop&q=80&w=200' },
+    '3D Solutions': [
+      { name: '3D Models', view: 'category', cat: '3D Models' },
+      { name: 'Comparison Tool', view: 'compare' },
+      { name: 'Custom Prints', view: 'model-upload' }
     ],
-    'RC Cars': [
-      { name: 'Titan Rover', image: 'https://images.unsplash.com/photo-1531693251400-38df35776dc7?auto=format&fit=crop&q=80&w=200' },
-      { name: 'Drift King', image: 'https://images.unsplash.com/photo-1594731826601-3827494a8c5f?auto=format&fit=crop&q=80&w=200' },
+    'Services': [
+      { name: 'Project Support', view: 'college-projects' },
+      { name: 'Custom Hardware', view: 'contact' },
+      { name: 'Technical Docs', view: 'home' },
+      { name: 'Consultation', view: 'contact' }
     ],
-    '3D Models': [
-      { name: 'Chassis V2', image: 'https://images.unsplash.com/photo-1581092334651-ddf26d9a1930?auto=format&fit=crop&q=80&w=200' },
-      { name: 'Propeller Set', image: 'https://images.unsplash.com/photo-1558444479-2706fa58b8c6?auto=format&fit=crop&q=80&w=200' },
+    'Default': [
+      { name: 'Comparison Tool', view: 'compare' },
+      { name: 'Support', view: 'contact' }
+    ]
+  };
+
+  const megaMenuContent: Record<string, any[]> = {
+    'Products': [
+      { name: 'Robots', image: robotsImg, view: 'category', category: 'Robo Toys' },
+      { name: 'Drones', image: dronesImg, view: 'category', category: 'Drones' },
+      { name: 'RC Vehicles', image: carsImg, view: 'category', category: 'RC Vehicles' },
     ],
-    'Services': []
+    '3D Solutions': dynamic3DProducts,
+    'Services': [
+      { name: 'College Projects', image: collegeProjectsImg, view: 'college-projects', category: null },
+      { name: 'Custom Builds', image: customBuildsImg, view: 'model-upload', category: null },
+    ]
   };
 
   return (
@@ -93,14 +195,14 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
             : 'bg-transparent border border-transparent px-2'
         }`}>
           <div 
+            className="flex items-center cursor-pointer group"
             onClick={() => {
+              setCurrentView('home');
               setActiveCategory(null);
               setActiveItem(null);
-              setIsMobileMenuOpen(false);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="relative flex items-center cursor-pointer group"
           >
-            <div className="absolute -inset-2 bg-primary/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <img src={logo} alt="BISONIX Logo" className="h-12 sm:h-14 md:h-16 lg:h-20 w-auto relative z-10 transition-all duration-300" />
           </div>
 
@@ -108,19 +210,21 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
             {navLinks.map((item) => (
               <li 
                 key={item.name} 
-                onMouseEnter={() => setHoveredLink(item.name)}
+                onMouseEnter={() => {
+                  setHoveredLink(item.name);
+                  if (item.name === '3D Solutions') fetch3D();
+                }}
                 onMouseLeave={() => setHoveredLink(null)}
                 onClick={() => {
-                  if (item.name === 'Contact Us') {
+                  if (item.name === 'Contact') {
                     setCurrentView('contact');
-                    setActiveItem('Contact Us');
+                    setActiveItem('Contact');
                   } else if (item.name === 'Track Order') {
                     setCurrentView('track-order');
                     setActiveItem('Track Order');
-                  } else if (item.name !== 'Services') {
-                    setActiveCategory(item.name);
-                    setActiveItem(item.name);
-                    setCurrentView('category');
+                  } else if (item.name === 'Admin Panel') {
+                    setCurrentView('admin');
+                    setActiveItem('Admin Panel');
                   }
                 }}
                 className="relative px-4 py-6 cursor-pointer group flex items-center gap-1"
@@ -131,25 +235,24 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                 {item.hasDropdown && <ChevronDown size={14} className="relative z-10 group-hover:text-primary transition-colors" />}
                 
                 <AnimatePresence>
-                  {hoveredLink === item.name && (
+                  {hoveredLink === item.name && item.hasDropdown && (
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
                       className="absolute top-full left-1/2 -translate-x-1/2 pt-0 cursor-default"
                     >
-                      <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-3xl shadow-2xl overflow-hidden flex min-w-[700px] backdrop-blur-xl mt-2">
+                      <div className="bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-3xl shadow-2xl overflow-hidden flex min-w-[750px] backdrop-blur-xl mt-2">
                         <div className="w-56 bg-[var(--bg-secondary)]/50 p-8 border-r border-[var(--border-subtle)] space-y-6">
-                          <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-4">Resources</p>
-                          {[
-                            { name: 'Comparison Tool', view: 'compare' },
-                            { name: 'Track Order', view: 'track-order' },
-                            { name: 'New Arrivals', view: 'category' },
-                            { name: 'Best Sellers', view: 'category' }
-                          ].map(link => (
+                          <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-4">Quick Access</p>
+                          {(sidebarLinks[item.name] || sidebarLinks['Default']).map((link: any) => (
                             <div 
                               key={link.name} 
-                              onClick={() => { setCurrentView(link.view); setHoveredLink(null); }}
+                              onClick={() => { 
+                                setCurrentView(link.view); 
+                                if (link.cat) setActiveCategory(link.cat);
+                                setHoveredLink(null); 
+                              }}
                               className="text-xs font-bold text-[var(--text-main)] hover:text-primary transition-colors cursor-pointer flex justify-between items-center group/link"
                             >
                               {link.name}
@@ -158,46 +261,32 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                           ))}
                           <div className="pt-6 mt-6 border-t border-[var(--border-subtle)]">
                             <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
-                              <p className="text-[10px] font-bold text-[var(--text-main)]">Flash Sale!</p>
-                              <p className="text-[9px] text-[var(--text-muted)]">Up to 40% off on Robo Kits</p>
+                              <p className="text-[10px] font-bold text-[var(--text-main)]">Special Offer!</p>
+                              <p className="text-[9px] text-[var(--text-muted)]">Get 15% off on your first custom build.</p>
                             </div>
                           </div>
                         </div>
                         
                         <div className="flex-1 p-8 bg-[var(--bg-primary)]/80">
                           <div className="grid grid-cols-3 gap-8">
-                            {megaMenuContent[item.name]?.map((prod, idx) => (
-                              <div key={idx} className="group/item cursor-pointer">
+                            {megaMenuContent[item.name]?.map((subItem: any, idx: number) => (
+                              <div 
+                                key={idx} 
+                                onClick={() => {
+                                  setCurrentView(subItem.view);
+                                  if (subItem.category) setActiveCategory(subItem.category);
+                                  if (subItem.product) setSelectedProduct(subItem.product);
+                                  setActiveItem(item.name);
+                                  setHoveredLink(null);
+                                }}
+                                className="group/item cursor-pointer text-center"
+                              >
                                 <div className="aspect-square rounded-2xl bg-[var(--bg-secondary)] overflow-hidden mb-3 border border-[var(--border-subtle)] shadow-sm">
-                                  <img src={prod.image} className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-110" />
+                                  <img src={subItem.image} className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-110" />
                                 </div>
-                                <p className="text-[10px] font-bold text-[var(--text-main)] text-center group-hover/item:text-primary transition-colors">{prod.name}</p>
+                                <p className="text-[10px] font-bold text-[var(--text-main)] group-hover/item:text-primary transition-colors uppercase tracking-wider">{subItem.name}</p>
                               </div>
                             ))}
-                            {item.name === 'Services' && (
-                              <div className="col-span-3 grid grid-cols-2 gap-4">
-                                <div 
-                                  onClick={() => { setCurrentView('college-projects'); setHoveredLink(null); }}
-                                  className="p-8 rounded-[2rem] bg-orange-500/5 border border-orange-500/10 hover:bg-orange-500/10 transition-all cursor-pointer group/card flex flex-col justify-center text-center"
-                                >
-                                  <div className="flex justify-center items-center gap-2 mb-2">
-                                    <p className="text-base font-bold text-[var(--text-main)] font-display">College Projects</p>
-                                    <ChevronRight size={16} className="text-primary opacity-0 group-hover/card:opacity-100 transition-all group-hover/card:translate-x-1" />
-                                  </div>
-                                  <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">Custom robotics support and components for engineering students.</p>
-                                </div>
-                                <div 
-                                  onClick={() => { setCurrentView('model-upload'); setHoveredLink(null); }}
-                                  className="p-8 rounded-[2rem] bg-blue-500/5 border border-blue-500/10 hover:bg-blue-500/10 transition-all cursor-pointer group/card flex flex-col justify-center text-center"
-                                >
-                                  <div className="flex justify-center items-center gap-2 mb-2">
-                                    <p className="text-base font-bold text-[var(--text-main)] font-display">Customized 3D Model</p>
-                                    <ChevronRight size={16} className="text-primary opacity-0 group-hover/card:opacity-100 transition-all group-hover/card:translate-x-1" />
-                                  </div>
-                                  <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">Upload your proprietary designs for precision industrial 3D printing.</p>
-                                </div>
-                              </div>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -209,49 +298,261 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
           </ul>
 
           <div className="relative z-10 flex items-center gap-2 sm:gap-4 text-[var(--text-main)]">
-            <button 
-              onClick={() => setIsDark(!isDark)}
-              className="p-2 hover:bg-[var(--text-main)]/10 rounded-full transition-all duration-300 relative overflow-hidden"
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={isDark ? 'dark' : 'light'}
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -10, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {isDark ? <Moon size={20} className="text-blue-400" /> : <Sun size={20} className="text-orange-500" />}
-                </motion.div>
-              </AnimatePresence>
-            </button>
+            {/* Desktop Actions */}
+            <div className="hidden lg:flex items-center gap-4">
+              <button 
+                onClick={() => setIsDark(!isDark)}
+                className="p-2 hover:bg-[var(--text-main)]/10 rounded-full transition-all duration-300 relative overflow-hidden"
+              >
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={isDark ? 'dark' : 'light'}
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -10, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {isDark ? <Moon size={20} className="text-blue-400" /> : <Sun size={20} className="text-orange-500" />}
+                  </motion.div>
+                </AnimatePresence>
+              </button>
 
-            <button 
-              onClick={() => setIsCartOpen(true)}
-              className="relative p-2 hover:bg-[var(--text-main)]/10 rounded-full transition-colors group"
-            >
-              <ShoppingCart size={20} className="text-[var(--text-muted)] group-hover:text-primary transition-colors" />
-              {cartItems.length > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full border-2 border-[var(--bg-primary)] flex items-center justify-center">
-                  {cartItems.length}
-                </span>
+              {user && (
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                    className="p-2 hover:bg-[var(--text-main)]/10 rounded-full transition-colors group"
+                  >
+                    <Bell size={20} className="text-[var(--text-muted)] group-hover:text-primary transition-colors" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-[var(--bg-primary)] flex items-center justify-center">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  <AnimatePresence>
+                    {isNotificationsOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute top-full right-0 mt-4 w-80 bg-[var(--bg-secondary)] backdrop-blur-xl border border-[var(--border-subtle)] rounded-3xl shadow-2xl overflow-hidden z-50 flex flex-col max-h-[400px]"
+                      >
+                        <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-primary)]/50">
+                          <p className="text-[10px] font-black text-[var(--text-main)] uppercase tracking-widest">Notifications</p>
+                          {unreadCount > 0 && <span className="text-[10px] font-bold text-primary">{unreadCount} New</span>}
+                        </div>
+                        
+                        <div className="overflow-y-auto flex-1 py-2 custom-scrollbar">
+                          {notifications.length === 0 ? (
+                            <div className="p-8 text-center">
+                              <p className="text-xs text-[var(--text-muted)]">No notifications yet</p>
+                            </div>
+                          ) : (
+                            notifications.map((notif) => (
+                              <div 
+                                key={notif._id} 
+                                onClick={() => { markNotificationAsRead(notif._id); if (notif.type === 'coupon') setCurrentView('profile'); }}
+                                className={`p-4 hover:bg-[var(--text-main)]/5 transition-all cursor-pointer border-b border-[var(--border-subtle)] last:border-0 ${!notif.isRead ? 'bg-primary/5' : ''}`}
+                              >
+                                <div className="flex gap-3">
+                                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${notif.type === 'coupon' ? 'bg-orange-500/20 text-orange-500' : 'bg-primary/20 text-primary'}`}>
+                                    {notif.type === 'coupon' ? <Ticket size={14} /> : <Bell size={14} />}
+                                  </div>
+                                  <div className="flex-1 text-left">
+                                    <p className="text-[11px] font-bold text-[var(--text-main)] mb-1">{notif.title}</p>
+                                    <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">{notif.message}</p>
+                                    <p className="text-[9px] text-[var(--text-muted)] mt-2 font-medium">{new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                  </div>
+                                  {!notif.isRead && <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1" />}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
-            </button>
 
-            <button 
-              onClick={() => setIsAuthModalOpen(true)}
-              className="ml-1 sm:ml-2 relative overflow-hidden group bg-[var(--text-main)]/5 hover:bg-[var(--text-main)]/10 border border-[var(--border-subtle)] px-5 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300"
-            >
-              <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-primary/80 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <span className="relative z-10 group-hover:text-white text-[var(--text-main)] transition-colors duration-300">Sign In</span>
-            </button>
-            
-            <button 
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 hover:bg-[var(--text-main)]/10 rounded-full transition-colors relative z-[60]"
-            >
-              {isMobileMenuOpen ? <X size={24} className="text-primary" /> : <Menu size={24} className="text-[var(--text-muted)]" />}
-            </button>
+              <button 
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2 hover:bg-[var(--text-main)]/10 rounded-full transition-colors group"
+              >
+                <ShoppingCart size={20} className="text-[var(--text-muted)] group-hover:text-primary transition-colors" />
+                {cartItems.length > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full border-2 border-[var(--bg-primary)] flex items-center justify-center">
+                    {cartItems.length}
+                  </span>
+                )}
+              </button>
+
+              {user ? (
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="flex items-center bg-[var(--text-main)]/5 hover:bg-[var(--text-main)]/10 border border-[var(--border-subtle)] p-1 rounded-full transition-all duration-300 group shadow-lg shadow-black/10"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-r from-primary to-orange-500 flex items-center justify-center text-white font-bold text-xs overflow-hidden ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
+                      {user.avatar ? (
+                        <img src={user.avatar} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{user.name?.charAt(0) || user.email?.charAt(0) || 'U'}</span>
+                      )}
+                    </div>
+                  </button>
+
+                  <AnimatePresence>
+                    {isProfileOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute top-full right-0 mt-2 w-48 bg-[var(--bg-secondary)] backdrop-blur-xl border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden z-50 p-2"
+                      >
+                        <button 
+                          onClick={() => { setCurrentView('profile'); setIsProfileOpen(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-[var(--text-main)] hover:bg-primary/10 hover:text-primary rounded-xl transition-all"
+                        >
+                          <UserIcon size={16} />
+                          My Profile
+                        </button>
+                        
+                        {user.role === 'admin' && (
+                          <button 
+                            onClick={() => { setCurrentView('admin'); setIsProfileOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-[var(--text-main)] hover:bg-primary/10 hover:text-primary rounded-xl transition-all"
+                          >
+                            <Settings size={16} />
+                            Admin Dashboard
+                          </button>
+                        )}
+                        <div className="h-[1px] bg-[var(--border-subtle)] my-1 mx-2" />
+                        <button 
+                          onClick={() => { logout(); setIsProfileOpen(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                        >
+                          <LogOut size={16} />
+                          Sign Out
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="ml-2 relative overflow-hidden group bg-[var(--text-main)]/5 hover:bg-[var(--text-main)]/10 border border-[var(--border-subtle)] px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300"
+                >
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-primary/80 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <span className="relative z-10 group-hover:text-white text-[var(--text-main)] transition-colors duration-300">Sign In</span>
+                </button>
+              )}
+            </div>
+
+            {/* Mobile Actions Overlay/Menu Trigger */}
+            <div className="flex lg:hidden items-center gap-2">
+              <div className="relative">
+                <button 
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="p-2 text-[var(--text-muted)] hover:text-primary transition-colors"
+                >
+                  <MoreVertical size={24} />
+                </button>
+                
+                <AnimatePresence>
+                  {isProfileOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute top-full right-0 mt-4 w-64 bg-[var(--bg-secondary)] backdrop-blur-xl border border-[var(--border-subtle)] rounded-3xl shadow-2xl overflow-hidden z-50 p-4 space-y-4"
+                    >
+                      <div className="grid grid-cols-2 gap-3">
+                        <button 
+                          onClick={() => setIsDark(!isDark)}
+                          className="flex flex-col items-center justify-center p-4 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl hover:border-primary transition-all"
+                        >
+                          {isDark ? <Moon size={20} className="text-blue-400 mb-2" /> : <Sun size={20} className="text-orange-500 mb-2" />}
+                          <span className="text-[10px] font-bold uppercase tracking-widest">{isDark ? 'Dark' : 'Light'}</span>
+                        </button>
+                        
+                        <button 
+                          onClick={() => { setIsCartOpen(true); setIsProfileOpen(false); }}
+                          className="flex flex-col items-center justify-center p-4 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl hover:border-primary transition-all relative"
+                        >
+                          <ShoppingCart size={20} className="text-[var(--text-muted)] mb-2" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Cart</span>
+                          {cartItems.length > 0 && (
+                            <span className="absolute top-2 right-2 w-4 h-4 bg-primary text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+                              {cartItems.length}
+                            </span>
+                          )}
+                        </button>
+
+                        {user && (
+                          <>
+                            <button 
+                              onClick={() => { setIsNotificationsOpen(!isNotificationsOpen); setIsProfileOpen(false); }}
+                              className="flex flex-col items-center justify-center p-4 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl hover:border-primary transition-all relative"
+                            >
+                              <Bell size={20} className="text-[var(--text-muted)] mb-2" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest">Alerts</span>
+                              {unreadCount > 0 && (
+                                <span className="absolute top-2 right-2 w-4 h-4 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+                                  {unreadCount}
+                                </span>
+                              )}
+                            </button>
+                            <button 
+                              onClick={() => { setCurrentView('profile'); setIsProfileOpen(false); }}
+                              className="flex flex-col items-center justify-center p-4 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl hover:border-primary transition-all"
+                            >
+                              <UserIcon size={20} className="text-[var(--text-muted)] mb-2" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest">Profile</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
+
+                      {user?.role === 'admin' && (
+                        <button 
+                          onClick={() => { setCurrentView('admin'); setIsProfileOpen(false); }}
+                          className="w-full py-3 bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg"
+                        >
+                          <Settings size={14} /> Admin Dashboard
+                        </button>
+                      )}
+
+                      {user ? (
+                        <button 
+                          onClick={() => { logout(); setIsProfileOpen(false); }}
+                          className="w-full py-3 bg-red-500/10 text-red-500 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-red-500/20"
+                        >
+                          Sign Out
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => { setIsAuthModalOpen(true); setIsProfileOpen(false); }}
+                          className="w-full py-3 bg-primary text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-primary/20"
+                        >
+                          Sign In
+                        </button>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 hover:bg-[var(--text-main)]/10 rounded-full transition-colors relative z-[60]"
+              >
+                {isMobileMenuOpen ? <X size={24} className="text-primary" /> : <Menu size={24} className="text-[var(--text-muted)]" />}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -270,7 +571,7 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed top-0 right-0 h-full w-full max-w-xs bg-[var(--bg-primary)] border-l border-[var(--border-subtle)] z-[56] lg:hidden p-8 pt-24 space-y-8 shadow-2xl"
+                className="fixed top-0 right-0 h-full w-full max-w-xs bg-[var(--bg-primary)] border-l border-[var(--border-subtle)] z-[56] lg:hidden p-8 pt-24 space-y-8 shadow-2xl overflow-y-auto"
               >
                 <div className="space-y-2">
                   <p className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-[0.2em] mb-4">Navigation</p>
@@ -278,16 +579,18 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                     <div key={item.name}>
                       <button 
                         onClick={() => {
-                          if (item.name === 'Contact Us') {
+                          if (item.name === 'Contact') {
                             setCurrentView('contact');
-                            setActiveItem('Contact Us');
+                            setActiveItem('Contact');
                             setIsMobileMenuOpen(false);
-                          } else if (item.name !== 'Services') {
-                            setActiveCategory(item.name);
-                            setActiveItem(item.name);
+                          } else if (item.name === 'Track Order') {
+                            setCurrentView('track-order');
+                            setActiveItem('Track Order');
                             setIsMobileMenuOpen(false);
+                          } else if (item.hasDropdown) {
+                            setActiveItem(activeItem === item.name ? null : item.name);
                           } else {
-                            setActiveItem(activeItem === 'Services' ? null : 'Services');
+                            setIsMobileMenuOpen(false);
                           }
                         }}
                         className="w-full text-left py-4 border-b border-[var(--border-subtle)] flex justify-between items-center group"
@@ -295,38 +598,69 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                         <span className={`text-xl font-bold font-display transition-colors ${activeItem === item.name ? 'text-primary' : 'text-[var(--text-main)]'}`}>
                           {item.name}
                         </span>
-                        <ChevronRight size={18} className={`text-[var(--text-muted)] transition-transform ${activeItem === item.name && item.name === 'Services' ? 'rotate-90' : ''}`} />
+                        {item.hasDropdown && (
+                          <ChevronRight size={18} className={`text-[var(--text-muted)] transition-transform ${activeItem === item.name ? 'rotate-90' : ''}`} />
+                        )}
                       </button>
                       
-                      {item.name === 'Services' && activeItem === 'Services' && (
+                      {item.hasDropdown && activeItem === item.name && (
                         <div className="pl-4 py-4 space-y-4">
-                          <button 
-                            onClick={() => { setCurrentView('college-projects'); setIsMobileMenuOpen(false); }}
-                            className="w-full text-left py-2 text-sm font-bold text-[var(--text-muted)] hover:text-primary transition-colors"
-                          >
-                            College Projects
-                          </button>
-                          <button 
-                            onClick={() => { setCurrentView('model-upload'); setIsMobileMenuOpen(false); }}
-                            className="w-full text-left py-2 text-sm font-bold text-[var(--text-muted)] hover:text-primary transition-colors"
-                          >
-                            Customized 3D Model
-                          </button>
+                          {megaMenuContent[item.name]?.map((subItem: any, idx: number) => (
+                            <button 
+                              key={idx}
+                              onClick={() => { 
+                                setCurrentView(subItem.view); 
+                                if (subItem.category) setActiveCategory(subItem.category);
+                                setIsMobileMenuOpen(false); 
+                              }}
+                              className="w-full text-left py-2 text-sm font-bold text-[var(--text-muted)] hover:text-primary transition-colors flex justify-between items-center"
+                            >
+                              {subItem.name}
+                              <ChevronRight size={14} className="opacity-30" />
+                            </button>
+                          ))}
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
                 <div className="pt-8">
-                  <button 
-                    onClick={() => {
-                      setIsAuthModalOpen(true);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full bg-primary text-white py-4 rounded-2xl font-bold shadow-lg shadow-primary/20"
-                  >
-                    Account Access
-                  </button>
+                  {user ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-center p-6 bg-[var(--text-main)]/5 rounded-3xl border border-[var(--border-subtle)]">
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-r from-primary to-orange-500 flex items-center justify-center text-white font-bold text-2xl overflow-hidden shadow-2xl shadow-primary/20">
+                          {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <span>{user.name?.charAt(0) || 'U'}</span>}
+                        </div>
+                      </div>
+                      
+                      {user.role === 'admin' && (
+                        <button 
+                          onClick={() => { setCurrentView('admin'); setIsMobileMenuOpen(false); }}
+                          className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg"
+                        >
+                          <Settings size={18} />
+                          Admin Dashboard
+                        </button>
+                      )}
+                      
+                      <button 
+                        onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+                        className="w-full bg-red-500/10 text-red-500 py-4 rounded-2xl font-bold border border-red-500/20"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        setIsAuthModalOpen(true);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full bg-primary text-white py-4 rounded-2xl font-bold shadow-lg shadow-primary/20"
+                    >
+                      Account Access
+                    </button>
+                  )}
                 </div>
               </motion.div>
             </>
@@ -335,7 +669,7 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
       </motion.nav>
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} setCartItems={setCartItems} />
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} setCartItems={setCartItems} setCurrentView={setCurrentView} />
       <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       {/* Floating WhatsApp Button */}

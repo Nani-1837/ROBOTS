@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Features from './components/Features';
@@ -18,29 +18,71 @@ import TrackOrderView from './components/TrackOrderView';
 import CompareView from './components/CompareView';
 import TrustSection from './components/TrustSection';
 import FAQ from './components/FAQ';
-import Portfolio from './components/Portfolio';
-import LiveActivity from './components/LiveActivity';
-import Roadmap from './components/Roadmap';
-import ReferralSection from './components/ReferralSection';
 import SoundEffects from './components/SoundEffects';
+import ProductDetailView from './components/ProductDetailView';
+import AdminPanel from './components/AdminPanel';
+import CollegeProjectDetail from './components/CollegeProjectDetail';
+import ProfileView from './components/ProfileView';
+import CheckoutView from './components/CheckoutView';
 import './index.css';
 
-function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'category' | 'college-projects' | 'model-upload' | 'contact' | 'track-order' | 'compare'>('home');
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [cartItems, setCartItems] = useState([
-    { id: 1, name: 'Spectra-X Pro Drone', price: 1299, qty: 1, image: 'https://images.unsplash.com/photo-1507582020474-9a35b7d455d9?auto=format&fit=crop&q=80&w=200' },
-    { id: 2, name: 'Titan Rover RC', price: 599, qty: 1, image: 'https://images.unsplash.com/photo-1531693251400-38df35776dc7?auto=format&fit=crop&q=80&w=200' }
-  ]);
 
-  // Handle Category Changes
+import { useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
+
+type View = 'home' | 'category' | 'college-projects' | 'college-project-detail' | 'model-upload' | 'contact' | 'track-order' | 'compare' | 'product-detail' | 'admin' | 'profile' | 'checkout';
+
+function App() {
+  // Initialize state from localStorage
+  const getInitialView = (): View => {
+    const saved = localStorage.getItem('currentView') as View;
+    const validViews: View[] = ['home', 'category', 'college-projects', 'college-project-detail', 'model-upload', 'contact', 'track-order', 'compare', 'product-detail', 'admin', 'profile', 'checkout'];
+    return validViews.includes(saved) ? saved : 'home';
+  };
+
+  const getInitialCategory = () => {
+    return localStorage.getItem('activeCategory') || null;
+  };
+
+  const [currentView, setCurrentView] = useState<View>(getInitialView());
+
+
+  const [activeCategory, setActiveCategory] = useState<string | null>(getInitialCategory());
+  const [selectedProduct, setSelectedProduct] = useState<null | {
+    _id: string;
+    name: string;
+    description: string;
+    price: number;
+    originalPrice?: number;
+    images: string[];
+    category: any;
+    stock: number;
+  }>(null);
+  const [selectedCollegeProject, setSelectedCollegeProject] = useState<any>(null);
+
+  const { user, loading } = useAuth();
+  
+  const [cartItems, setCartItems] = useState<any[]>([]);
+
+  // Save changes to localStorage
   useEffect(() => {
+    localStorage.setItem('currentView', currentView);
     if (activeCategory) {
-      setCurrentView('category');
+      localStorage.setItem('activeCategory', activeCategory);
     } else {
+      localStorage.removeItem('activeCategory');
+    }
+  }, [currentView, activeCategory]);
+
+  // Guard Admin Access on load
+  useEffect(() => {
+    if (!loading && currentView === 'admin' && user?.role !== 'admin') {
       setCurrentView('home');
     }
-  }, [activeCategory]);
+  }, [user, loading, currentView]);
+
+  // Handle Category Changes - only navigate to category if user explicitly sets one
+  // (removed auto-select to avoid unintended navigation)
 
   // Scroll to top when view changes
   useEffect(() => {
@@ -48,71 +90,223 @@ function App() {
   }, [currentView, activeCategory]);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-main)] selection:bg-primary/30 selection:text-[var(--text-main)] transition-colors duration-400">
+    <ToastProvider>
+      <div className="relative min-h-screen bg-[var(--bg-primary)] text-[var(--text-main)] selection:bg-primary/30 selection:text-[var(--text-main)] transition-colors duration-400">
       <SoundEffects />
       <Navbar 
         cartItems={cartItems} 
         setCartItems={setCartItems} 
         setActiveCategory={setActiveCategory} 
         setCurrentView={setCurrentView}
+        setSelectedProduct={setSelectedProduct}
       />
       
       <AnimatePresence mode="wait">
         {currentView === 'home' && (
-          <main key="home">
+          <motion.main 
+            key="home"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.4 }}
+          >
             <Hero setCurrentView={setCurrentView} setActiveCategory={setActiveCategory} />
             <Features />
             <TrustSection />
             <Showcase />
-            <Portfolio />
-            <Roadmap />
             <NeuralArchitecture />
             <Stats />
-            <ReferralSection />
-            <ProductGrid setCartItems={setCartItems} setActiveCategory={setActiveCategory} />
+            <ProductGrid 
+              setActiveCategory={setActiveCategory} 
+              onProductClick={(product) => {
+                setSelectedProduct(product);
+                setCurrentView('product-detail');
+              }}
+            />
             <Testimonials />
             <FAQ />
             <Newsletter />
-          </main>
+          </motion.main>
         )}
 
         {currentView === 'category' && activeCategory && (
-          <CategoryView 
+          <motion.div
             key="category"
-            category={activeCategory} 
-            onBack={() => setActiveCategory(null)} 
-            setCartItems={setCartItems}
-          />
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <CategoryView 
+              category={activeCategory} 
+              onBack={() => { setActiveCategory(null); setCurrentView('home'); }} 
+              onProductClick={(product) => {
+
+                setSelectedProduct(product);
+                setCurrentView('product-detail');
+              }}
+            />
+          </motion.div>
         )}
 
         {currentView === 'college-projects' && (
-          <CollegeProjectsView 
-            key="college-projects" 
-            onBack={() => { setActiveCategory(null); setCurrentView('home'); }} 
-            setCartItems={setCartItems}
-          />
+          <motion.div
+            key="college-projects"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.3 }}
+          >
+            <CollegeProjectsView 
+              onBack={() => { setActiveCategory(null); setCurrentView('home'); }} 
+              onProjectClick={(project) => {
+
+                setSelectedCollegeProject(project);
+                setCurrentView('college-project-detail');
+              }}
+            />
+
+          </motion.div>
         )}
 
         {currentView === 'model-upload' && (
-          <ModelUploadView key="model-upload" onBack={() => { setActiveCategory(null); setCurrentView('home'); }} />
+          <motion.div
+            key="model-upload"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <ModelUploadView onBack={() => { setActiveCategory(null); setCurrentView('home'); }} />
+          </motion.div>
         )}
 
         {currentView === 'contact' && (
-          <ContactView key="contact" onBack={() => { setActiveCategory(null); setCurrentView('home'); }} />
+          <motion.div
+            key="contact"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <ContactView onBack={() => { setActiveCategory(null); setCurrentView('home'); }} />
+          </motion.div>
         )}
 
         {currentView === 'track-order' && (
-          <TrackOrderView key="track-order" onBack={() => { setActiveCategory(null); setCurrentView('home'); }} />
+          <motion.div
+            key="track-order"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <TrackOrderView onBack={() => { setActiveCategory(null); setCurrentView('home'); }} />
+          </motion.div>
+        )}
+
+        {currentView === 'college-project-detail' && selectedCollegeProject && (
+          <motion.div
+            key="college-project-detail"
+            initial={{ opacity: 0, scale: 1.02 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <CollegeProjectDetail 
+              project={selectedCollegeProject}
+              onBack={() => setCurrentView('college-projects')}
+              setCartItems={setCartItems}
+            />
+          </motion.div>
         )}
 
         {currentView === 'compare' && (
-          <CompareView key="compare" onBack={() => { setActiveCategory(null); setCurrentView('home'); }} />
+
+          <motion.div
+            key="compare"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <CompareView onBack={() => { setActiveCategory(null); setCurrentView('home'); }} />
+          </motion.div>
         )}
+
+        {currentView === 'product-detail' && selectedProduct && (
+          <motion.div
+            key="product-detail"
+            initial={{ opacity: 0, scale: 1.02 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <ProductDetailView 
+              product={selectedProduct}
+              onBack={() => {
+                if (activeCategory) setCurrentView('category');
+                else setCurrentView('home');
+              }}
+              setCartItems={setCartItems}
+              onProductClick={(p) => {
+                setSelectedProduct(p);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          </motion.div>
+        )}
+
+        {currentView === 'admin' && user?.role === 'admin' && (
+          <motion.div
+            key="admin"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.4 }}
+          >
+            <AdminPanel />
+          </motion.div>
+        )}
+
+        {currentView === 'profile' && user && (
+          <motion.div
+            key="profile"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.4 }}
+          >
+            <ProfileView setCartItems={setCartItems} />
+          </motion.div>
+        )}
+
+        {currentView === 'checkout' && (
+          <motion.div
+            key="checkout"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <CheckoutView 
+              cartItems={cartItems}
+              user={user}
+              onBack={() => setCurrentView('home')}
+              onSuccess={() => {
+                setCartItems([]);
+                setCurrentView('profile');
+                // Could pass orderId to ProfileView if needed
+              }}
+            />
+          </motion.div>
+        )}
+
       </AnimatePresence>
 
-      <Footer />
-      <LiveActivity />
-    </div>
+      <Footer setCurrentView={setCurrentView} setActiveCategory={setActiveCategory} />
+      </div>
+    </ToastProvider>
   );
 }
 

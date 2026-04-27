@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Cpu, Zap, Brain } from 'lucide-react';
 
-const NeuralPoint = ({ title, desc, icon: Icon, index }) => {
+const NeuralPoint = ({ title, desc, icon: Icon, index }: { title: string, desc: string, icon: any, index: number }) => {
   const isEven = index % 2 === 0;
 
   return (
@@ -58,17 +58,17 @@ export default function NeuralArchitecture() {
   const points = [
     {
       title: "Bionic Processing Unit",
-      desc: "Our custom BPU architecture handles over 15 trillion operations per second, enabling real-time neural mapping and autonomous decision-making in complex environments.",
+      desc: "Real-time computation built for intelligent decision-making under complex conditions.",
       icon: Cpu
     },
     {
       title: "Kinetic Optimization",
-      desc: "Advanced physics-based solvers calculate optimal movement paths 500 times per second, ensuring perfect balance and fluid locomotion on any terrain.",
+      desc: "Physics-driven motion control for stability, efficiency, and seamless movement.",
       icon: Zap
     },
     {
       title: "Adaptive Neural Mesh",
-      desc: "A self-correcting sensory network that learns from every interaction, reducing latency and increasing system efficiency by up to 40% over time.",
+      desc: "A self-evolving system that continuously learns, adapts, and improves performance.",
       icon: Brain
     }
   ];
@@ -89,10 +89,10 @@ export default function NeuralArchitecture() {
           >
             <span className="text-primary font-black tracking-[0.3em] text-[10px] uppercase mb-4 block">System Core</span>
             <h2 className="text-4xl md:text-6xl font-bold font-display text-[var(--text-main)] mb-6">
-              Precision <span className="text-primary italic">Neural</span> Architecture
+              Powered by <span className="text-primary italic">Intelligent Systems</span>
             </h2>
-            <p className="text-[var(--text-muted)] max-w-2xl mx-auto text-lg">
-              Go deep into the biological-inspired computing that powers our autonomous ecosystems.
+            <p className="text-[var(--text-muted)] max-w-2xl mx-auto text-lg leading-relaxed">
+              At the heart of BISONIX lies a high-performance computing engine designed for real-time autonomy and precision control.
             </p>
           </motion.div>
         </div>

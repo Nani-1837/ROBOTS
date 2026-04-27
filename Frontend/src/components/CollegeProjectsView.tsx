@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import { motion } from 'framer-motion';
 import { ChevronRight, GraduationCap, ArrowUpRight, Star, RefreshCcw } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -88,7 +89,7 @@ export default function CollegeProjectsView({ onBack, onProjectClick }: CollegeP
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5000/api/college-projects');
+        const response = await fetch(`${API_URL}/api/college-projects`);
         const data = await response.json();
         if (response.ok) {
           setProjects(data);
@@ -161,4 +162,5 @@ export default function CollegeProjectsView({ onBack, onProjectClick }: CollegeP
     </motion.div>
   );
 }
+
 

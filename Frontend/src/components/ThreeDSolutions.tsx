@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight, Box, Plus } from 'lucide-react';
@@ -17,7 +18,7 @@ export default function ThreeDSolutions({ onProductClick, setActiveCategory }: {
   useEffect(() => {
     const fetch3DProducts = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/products');
+        const response = await fetch(`${API_URL}/api/products`);
         const data = await response.json();
         if (response.ok) {
           // Filter for 3D Models / 3D Solutions category
@@ -132,4 +133,5 @@ export default function ThreeDSolutions({ onProductClick, setActiveCategory }: {
     </section>
   );
 }
+
 

@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight, Mail, Phone, MapPin, Send, MessageSquare } from 'lucide-react';
@@ -21,7 +22,7 @@ export default function ContactView({ onBack }: ContactViewProps) {
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/contact', {
+      const res = await fetch(`${API_URL}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -202,3 +203,4 @@ export default function ContactView({ onBack }: ContactViewProps) {
     </motion.div>
   );
 }
+

@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -48,7 +49,7 @@ export default function ProfileView({ setCartItems }: { setCartItems?: React.Dis
   const handleRemoveFromWishlist = async (productId: string) => {
     try {
       const token = localStorage.getItem('insforgeToken');
-      await fetch(`http://localhost:5000/api/wishlist/${productId}`, {
+      await fetch(`${API_URL}/api/wishlist/${productId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -67,7 +68,7 @@ export default function ProfileView({ setCartItems }: { setCartItems?: React.Dis
     try {
       setLoading(true);
       const token = localStorage.getItem('insforgeToken');
-      const res = await fetch('http://localhost:5000/api/wishlist', {
+      const res = await fetch(`${API_URL}/api/wishlist`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -83,7 +84,7 @@ export default function ProfileView({ setCartItems }: { setCartItems?: React.Dis
     }
     try {
       const token = localStorage.getItem('insforgeToken');
-      const res = await fetch(`http://localhost:5000/api/orders/${id}/cancel`, {
+      const res = await fetch(`${API_URL}/api/orders/${id}/cancel`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -104,7 +105,7 @@ export default function ProfileView({ setCartItems }: { setCartItems?: React.Dis
     try {
       setLoading(true);
       const token = localStorage.getItem('insforgeToken');
-      const res = await fetch('http://localhost:5000/api/orders/my', {
+      const res = await fetch(`${API_URL}/api/orders/my`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -117,7 +118,7 @@ export default function ProfileView({ setCartItems }: { setCartItems?: React.Dis
     try {
       setLoading(true);
       const token = localStorage.getItem('insforgeToken');
-      const res = await fetch('http://localhost:5000/api/coupons/active', {
+      const res = await fetch(`${API_URL}/api/coupons/active`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -134,7 +135,7 @@ export default function ProfileView({ setCartItems }: { setCartItems?: React.Dis
     }
     try {
       const token = localStorage.getItem('insforgeToken');
-      await fetch(`http://localhost:5000/api/coupons/reveal/${code}`, {
+      await fetch(`${API_URL}/api/coupons/reveal/${code}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -149,7 +150,7 @@ export default function ProfileView({ setCartItems }: { setCartItems?: React.Dis
 
     try {
       const token = localStorage.getItem('insforgeToken');
-      const res = await fetch('http://localhost:5000/api/users/profile/avatar', {
+      const res = await fetch(`${API_URL}/api/users/profile/avatar`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -168,7 +169,7 @@ export default function ProfileView({ setCartItems }: { setCartItems?: React.Dis
     setIsGeneratingReferral(true);
     try {
       const token = localStorage.getItem('insforgeToken');
-      const res = await fetch('http://localhost:5000/api/users/profile/referral', {
+      const res = await fetch(`${API_URL}/api/users/profile/referral`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -571,3 +572,4 @@ export default function ProfileView({ setCartItems }: { setCartItems?: React.Dis
     </div>
   );
 }
+

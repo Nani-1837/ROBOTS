@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Users, Zap, Shield, X, Cpu } from 'lucide-react';
@@ -55,7 +56,7 @@ export default function Footer({ setCurrentView, setActiveCategory }: { setCurre
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/community/join', {
+      const res = await fetch(`${API_URL}/api/community/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -484,3 +485,4 @@ export default function Footer({ setCurrentView, setActiveCategory }: { setCurre
     </footer>
   );
 }
+

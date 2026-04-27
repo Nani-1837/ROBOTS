@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Star, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { API_URL } from '../config';
 
 const ProductCard = ({ id, image, name, category, price, originalPrice, rating, numReviews, delay, onProductClick, isWishlisted, onToggle }: any) => {
   const { user } = useAuth();
@@ -19,8 +20,8 @@ const ProductCard = ({ id, image, name, category, price, originalPrice, rating, 
       const token = localStorage.getItem('insforgeToken');
       const method = isWishlisted ? 'DELETE' : 'POST';
       const url = isWishlisted 
-        ? `http://localhost:5000/api/wishlist/${id}` 
-        : 'http://localhost:5000/api/wishlist';
+        ? `${API_URL}/api/wishlist/${id}` 
+        : `${API_URL}/api/wishlist`;
 
       const response = await fetch(url, {
         method,
@@ -125,7 +126,7 @@ export default function ProductGrid({ setActiveCategory, onProductClick }: { set
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const prodRes = await fetch('http://localhost:5000/api/products');
+        const prodRes = await fetch(`${API_URL}/api/products`);
         const prodData = await prodRes.json();
         if (prodRes.ok) {
           setProducts(prodData.filter((p: any) => p.featured).slice(0, 3));
@@ -133,7 +134,7 @@ export default function ProductGrid({ setActiveCategory, onProductClick }: { set
 
         if (user) {
           const token = localStorage.getItem('insforgeToken');
-          const wishRes = await fetch('http://localhost:5000/api/wishlist', {
+          const wishRes = await fetch(`${API_URL}/api/wishlist`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const wishData = await wishRes.json();

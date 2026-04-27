@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Zap } from 'lucide-react';
@@ -14,7 +15,7 @@ export default function Newsletter() {
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/community/join', {
+      const res = await fetch(`${API_URL}/api/community/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -91,3 +92,4 @@ export default function Newsletter() {
     </section>
   );
 }
+

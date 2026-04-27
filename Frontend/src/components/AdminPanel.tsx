@@ -7,6 +7,7 @@ import {
   ChevronRight, Plus, X, Upload, Trash2, Edit,
   CheckCircle2, Truck, Award, GraduationCap, Ticket, Calendar, DollarSign, MapPin, Share2
 } from 'lucide-react';
+import { API_URL } from '../config';
 import MapView from './MapView';
 
 
@@ -63,7 +64,7 @@ export default function AdminPanel() {
 
   const fetchBattle = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/battle');
+      const res = await fetch(`${API_URL}/api/battle`);
       const data = await res.json();
       if (res.ok) {
         setBattleForm({
@@ -83,7 +84,7 @@ export default function AdminPanel() {
       return;
     }
     try {
-      const res = await fetch('http://localhost:5000/api/battle', {
+      const res = await fetch(`${API_URL}/api/battle`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(battleForm)
@@ -185,7 +186,7 @@ export default function AdminPanel() {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('insforgeToken');
-      const response = await fetch('http://localhost:5000/api/orders/stats', {
+      const response = await fetch(`${API_URL}/api/orders/stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -199,7 +200,7 @@ export default function AdminPanel() {
     try {
       const token = localStorage.getItem('insforgeToken');
 
-      const response = await fetch('http://localhost:5000/api/users', {
+      const response = await fetch(`${API_URL}/api/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -210,7 +211,7 @@ export default function AdminPanel() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/products');
+      const response = await fetch(`${API_URL}/api/products`);
 
       const data = await response.json();
       if (response.ok) setProducts(data);
@@ -220,7 +221,7 @@ export default function AdminPanel() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/categories');
+      const response = await fetch(`${API_URL}/api/categories`);
       const data = await response.json();
       if (response.ok) setCategories(data);
     } catch (error) { console.error('Error fetching categories:', error); }
@@ -228,7 +229,7 @@ export default function AdminPanel() {
 
   const fetchCollegeProjects = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/college-projects');
+      const response = await fetch(`${API_URL}/api/college-projects`);
       const data = await response.json();
       if (response.ok) setCollegeProjects(data);
     } catch (error) { console.error('Error fetching college projects:', error); }
@@ -237,7 +238,7 @@ export default function AdminPanel() {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('insforgeToken');
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`${API_URL}/api/orders`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -248,7 +249,7 @@ export default function AdminPanel() {
   const updateOrderStatus = async (id: string) => {
     try {
       const token = localStorage.getItem('insforgeToken');
-      const response = await fetch(`http://localhost:5000/api/orders/${id}/status`, {
+      const response = await fetch(`${API_URL}/api/orders/${id}/status`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -273,7 +274,7 @@ export default function AdminPanel() {
   const fetchCoupons = async () => {
     try {
       const token = localStorage.getItem('insforgeToken');
-      const response = await fetch('http://localhost:5000/api/coupons', {
+      const response = await fetch(`${API_URL}/api/coupons`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -286,7 +287,7 @@ export default function AdminPanel() {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('insforgeToken');
-      const response = await fetch('http://localhost:5000/api/coupons', {
+      const response = await fetch(`${API_URL}/api/coupons`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -307,7 +308,7 @@ export default function AdminPanel() {
     if (!window.confirm('Delete this coupon?')) return;
     try {
       const token = localStorage.getItem('insforgeToken');
-      const response = await fetch(`http://localhost:5000/api/coupons/${id}`, {
+      const response = await fetch(`${API_URL}/api/coupons/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -370,8 +371,8 @@ export default function AdminPanel() {
 
       const token = localStorage.getItem('insforgeToken');
       const url = editingProductId 
-        ? `http://localhost:5000/api/products/${editingProductId}`
-        : 'http://localhost:5000/api/products';
+        ? `${API_URL}/api/products/${editingProductId}`
+        : `${API_URL}/api/products`;
       
       const method = editingProductId ? 'PUT' : 'POST';
 
@@ -417,8 +418,8 @@ export default function AdminPanel() {
 
       const token = localStorage.getItem('insforgeToken');
       const url = editingCollegeProjectId 
-        ? `http://localhost:5000/api/college-projects/${editingCollegeProjectId}`
-        : 'http://localhost:5000/api/college-projects';
+        ? `${API_URL}/api/college-projects/${editingCollegeProjectId}`
+        : `${API_URL}/api/college-projects`;
       
       const response = await fetch(url, {
         method: editingCollegeProjectId ? 'PUT' : 'POST',
@@ -450,7 +451,7 @@ export default function AdminPanel() {
     if (!window.confirm('Delete this college project?')) return;
     try {
       const token = localStorage.getItem('insforgeToken');
-      const response = await fetch(`http://localhost:5000/api/college-projects/${id}`, {
+      const response = await fetch(`${API_URL}/api/college-projects/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -502,7 +503,7 @@ export default function AdminPanel() {
     if (!window.confirm('Delete this product?')) return;
     try {
       const token = localStorage.getItem('insforgeToken');
-      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const response = await fetch(`${API_URL}/api/products/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Camera, Send, MessageSquare, User as UserIcon, CheckCircle2, Image as ImageIcon, X } from 'lucide-react';
@@ -26,7 +27,7 @@ export default function ReviewSection({ productId, user }: ReviewSectionProps) {
 
   const fetchReviews = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/reviews/${productId}`);
+      const response = await fetch(`${API_URL}/api/reviews/${productId}`);
       const data = await response.json();
       if (response.ok) setReviews(data);
     } catch (error) {
@@ -51,7 +52,7 @@ export default function ReviewSection({ productId, user }: ReviewSectionProps) {
 
     try {
       const token = localStorage.getItem('insforgeToken');
-      const response = await fetch(`http://localhost:5000/api/reviews/${productId}`, {
+      const response = await fetch(`${API_URL}/api/reviews/${productId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -286,3 +287,4 @@ export default function ReviewSection({ productId, user }: ReviewSectionProps) {
 
   );
 }
+

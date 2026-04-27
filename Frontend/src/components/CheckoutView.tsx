@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState } from 'react';
 import { 
   ChevronRight, MapPin, CreditCard, Tag,
@@ -55,7 +56,7 @@ export default function CheckoutView({ cartItems, onBack, onSuccess, user }: Che
     setCouponLoading(true);
     try {
       const token = localStorage.getItem('insforgeToken');
-      const res = await fetch('http://localhost:5000/api/coupons/validate', {
+      const res = await fetch(`${API_URL}/api/coupons/validate`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -95,7 +96,7 @@ export default function CheckoutView({ cartItems, onBack, onSuccess, user }: Che
       const token = localStorage.getItem('insforgeToken');
 
       // Place order
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -113,7 +114,7 @@ export default function CheckoutView({ cartItems, onBack, onSuccess, user }: Che
       });
 
       // Sync user profile in background
-      fetch('http://localhost:5000/api/users/profile', {
+      fetch(`${API_URL}/api/users/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ phone: formData.phone, addresses: [formData] })
@@ -362,3 +363,4 @@ export default function CheckoutView({ cartItems, onBack, onSuccess, user }: Che
     </div>
   );
 }
+

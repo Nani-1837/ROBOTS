@@ -1,27 +1,32 @@
 import { useEffect } from 'react';
 
-const CLICK_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'; // Lighter Pop Sound
-const HOVER_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'; // Subtle hover
+const HOVER_SOUND_URL = 'https://res.cloudinary.com/dqp0zkagb/video/upload/v1777283617/bisonix_assets/audio/hover_sound.mp3';
+const CLICK_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3';
+
+// Preload audio objects
+const hoverAudio = new Audio(HOVER_SOUND_URL);
+hoverAudio.volume = 0.05;
+const clickAudio = new Audio(CLICK_SOUND_URL);
+clickAudio.volume = 0.1;
 
 export default function SoundEffects() {
   useEffect(() => {
-    const playSound = (url: string, volume = 0.1) => {
-      const audio = new Audio(url);
-      audio.volume = volume;
+    const playSound = (audio: HTMLAudioElement) => {
+      audio.currentTime = 0;
       audio.play().catch(() => {});
     };
 
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest('button') || target.closest('a') || target.closest('li')) {
-        playSound(CLICK_SOUND, 0.1); // Reduced volume click
+        playSound(clickAudio);
       }
     };
 
     const handleHover = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest('button') || target.closest('a') || target.closest('li')) {
-        playSound(HOVER_SOUND, 0.05); // Very subtle hover
+        playSound(hoverAudio);
       }
     };
 

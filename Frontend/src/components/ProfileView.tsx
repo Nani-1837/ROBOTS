@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, Package, Heart, Ticket, HelpCircle, Activity, 
@@ -8,7 +8,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import ScratchCard from './ScratchCard';
-import MapComponent from './MapComponent';
+const MapComponent = lazy(() => import('./MapComponent'));
 
 export default function ProfileView({ setCartItems }: { setCartItems?: React.Dispatch<React.SetStateAction<any[]>> }) {
   const { user, logout, handleSession } = useAuth();
@@ -524,7 +524,9 @@ export default function ProfileView({ setCartItems }: { setCartItems?: React.Dis
                             <p className="text-xs text-[var(--text-muted)]">Your location is used for precise autonomous delivery and tracking.</p>
                           </div>
                         </div>
-                        <MapComponent onLocationSelect={() => showToast('Location updated in profile', 'success')} />
+                        <Suspense fallback={<div className="h-[300px] w-full flex items-center justify-center bg-[var(--bg-secondary)] rounded-2xl animate-pulse">Initializing Map...</div>}>
+                          <MapComponent onLocationSelect={() => showToast('Location updated in profile', 'success')} />
+                        </Suspense>
                       </div>
                     </div>
                   </motion.div>

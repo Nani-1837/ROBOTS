@@ -1,17 +1,19 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LazyMotion, domMax } from 'framer-motion';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Features from './components/Features';
 import Stats from './components/Stats';
 import VersionBanner from './components/VersionBanner';
-import NeuralArchitecture from './components/NeuralArchitecture';
 import ProductGrid from './components/ProductGrid';
 import Footer from './components/Footer';
-import Testimonials from './components/Testimonials';
-import Newsletter from './components/Newsletter';
-import TrustSection from './components/TrustSection';
-import FAQ from './components/FAQ';
+
+// Lazy load non-critical home components
+const NeuralArchitecture = lazy(() => import('./components/NeuralArchitecture'));
+const Testimonials = lazy(() => import('./components/Testimonials'));
+const Newsletter = lazy(() => import('./components/Newsletter'));
+const TrustSection = lazy(() => import('./components/TrustSection'));
+const FAQ = lazy(() => import('./components/FAQ'));
 import SoundEffects from './components/SoundEffects';
 import './index.css';
 
@@ -93,7 +95,8 @@ function App() {
 
   return (
     <ToastProvider>
-      <div className="relative min-h-screen bg-[var(--bg-primary)] text-[var(--text-main)] selection:bg-primary/30 selection:text-[var(--text-main)] transition-colors duration-400">
+      <LazyMotion features={domMax}>
+        <div className="relative min-h-screen bg-[var(--bg-primary)] text-[var(--text-main)] selection:bg-primary/30 selection:text-[var(--text-main)] transition-colors duration-400">
       <SoundEffects />
       <Navbar 
         cartItems={cartItems} 
@@ -120,10 +123,12 @@ function App() {
           >
             <Hero setCurrentView={setCurrentView} setActiveCategory={setActiveCategory} />
             <Features />
-            <TrustSection />
-            <VersionBanner />
-            <NeuralArchitecture />
-            <Stats />
+            <Suspense fallback={<div className="h-40 animate-pulse bg-primary/5 rounded-3xl" />}>
+              <TrustSection />
+              <VersionBanner />
+              <NeuralArchitecture />
+              <Stats />
+            </Suspense>
             <ProductGrid 
               setActiveCategory={setActiveCategory} 
               onProductClick={(product) => {
@@ -131,9 +136,11 @@ function App() {
                 setCurrentView('product-detail');
               }}
             />
-            <Testimonials />
-            <FAQ />
-            <Newsletter />
+            <Suspense fallback={<div className="h-40 animate-pulse bg-primary/5 rounded-3xl" />}>
+              <Testimonials />
+              <FAQ />
+              <Newsletter />
+            </Suspense>
           </motion.main>
         )}
 
@@ -327,6 +334,7 @@ function App() {
 
       <Footer setCurrentView={setCurrentView} setActiveCategory={setActiveCategory} />
       </div>
+      </LazyMotion>
     </ToastProvider>
   );
 }

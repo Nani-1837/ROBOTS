@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Menu, Sun, Moon, ChevronDown, ChevronRight, X, LogOut, Settings, User as UserIcon, Bell, Ticket } from 'lucide-react';
+import { ShoppingCart, Sun, Moon, ChevronDown, ChevronRight, X, LogOut, Settings, User as UserIcon, Bell, Ticket, MoreVertical } from 'lucide-react';
 import logo from '../assets/logo.png';
 import AuthModal from './AuthModal';
 import CartDrawer from './CartDrawer';
@@ -160,6 +160,7 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
     { name: 'Products', hasDropdown: true },
     ...(dynamic3DProducts.length > 0 ? [{ name: '3D Solutions', hasDropdown: true }] : []),
     { name: 'Services', hasDropdown: true },
+    { name: 'Comparison', href: '#' },
     { name: 'Contact', href: '#' },
   ];
 
@@ -209,6 +210,9 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                   if (item.name === 'Contact') {
                     setCurrentView('contact');
                     setActiveItem('Contact');
+                  } else if (item.name === 'Comparison') {
+                    setCurrentView('compare');
+                    setActiveItem('Comparison');
                   } else if (item.name === 'Admin Panel') {
                     setCurrentView('admin');
                     setActiveItem('Admin Panel');
@@ -287,98 +291,102 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
           </ul>
 
           <div className="flex items-center gap-2 sm:gap-4 relative z-10">
-            <button 
-              onClick={() => setIsDark(!isDark)}
-              className="p-2 sm:p-3 rounded-xl bg-[var(--bg-secondary)]/50 border border-[var(--border-subtle)] text-[var(--text-main)] hover:text-primary transition-all active:scale-95"
-            >
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-
-            <button 
-              className="p-2 sm:p-3 rounded-xl bg-[var(--bg-secondary)]/50 border border-[var(--border-subtle)] text-[var(--text-main)] hover:text-primary transition-all active:scale-95 relative"
-              onClick={() => { setIsNotificationsOpen(!isNotificationsOpen); setIsProfileOpen(false); }}
-            >
-              <Bell size={18} />
-              {unreadCount > 0 && (
-                <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(255,106,0,0.8)]" />
-              )}
-            </button>
-
-            <button 
-              onClick={() => { setIsCartOpen(true); setIsProfileOpen(false); }}
-              className="p-2 sm:p-3 rounded-xl bg-[var(--bg-secondary)]/50 border border-[var(--border-subtle)] text-[var(--text-main)] hover:text-primary transition-all active:scale-95 relative"
-            >
-              <ShoppingCart size={18} />
-              {cartItems.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-black w-5 h-5 rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-                  {cartItems.length}
-                </span>
-              )}
-            </button>
-
-            {user ? (
-              <div className="relative">
-                <button 
-                  onClick={() => { setIsProfileOpen(!isProfileOpen); setIsNotificationsOpen(false); }}
-                  className={`flex items-center gap-2 p-1 pr-3 rounded-xl bg-[var(--bg-secondary)]/50 border transition-all active:scale-95 ${isProfileOpen ? 'border-primary' : 'border-[var(--border-subtle)]'}`}
-                >
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-inner overflow-hidden">
-                    {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name?.[0]}
-                  </div>
-                  <span className="hidden md:block text-xs font-bold text-[var(--text-main)]">{user.name?.split(' ')[0]}</span>
-                </button>
-
-                <AnimatePresence>
-                  {isProfileOpen && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute top-full right-0 mt-2 w-64 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl"
-                    >
-                      <div className="p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]/50">
-                        <p className="text-xs font-black text-primary uppercase tracking-widest mb-1">Authenticated</p>
-                        <p className="text-sm font-bold text-[var(--text-main)] truncate">{user.email}</p>
-                      </div>
-                      <div className="p-2">
-                        <button 
-                          onClick={() => { setCurrentView('profile'); setIsProfileOpen(false); }}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-bold text-[var(--text-main)] hover:bg-[var(--bg-secondary)] transition-colors"
-                        >
-                          <UserIcon size={16} className="text-primary" /> Profile Settings
-                        </button>
-                        <button 
-                          className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-bold text-[var(--text-main)] hover:bg-[var(--bg-secondary)] transition-colors"
-                          onClick={() => { setCurrentView('track-order'); setIsProfileOpen(false); }}
-                        >
-                          <Ticket size={16} className="text-primary" /> My Orders
-                        </button>
-                        <div className="h-px bg-[var(--border-subtle)] my-2" />
-                        <button 
-                          onClick={() => { logout(); setIsProfileOpen(false); }}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-500/10 transition-colors"
-                        >
-                          <LogOut size={16} /> Sign Out
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ) : (
+            {/* Desktop Actions */}
+            <div className="hidden lg:flex items-center gap-2 sm:gap-4">
               <button 
-                onClick={() => setIsAuthModalOpen(true)}
-                className="px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                onClick={() => setIsDark(!isDark)}
+                className="p-2 sm:p-3 rounded-xl bg-[var(--bg-secondary)]/50 border border-[var(--border-subtle)] text-[var(--text-main)] hover:text-primary transition-all active:scale-95"
               >
-                Access
+                {isDark ? <Sun size={18} /> : <Moon size={18} />}
               </button>
-            )}
 
+              <button 
+                className="p-2 sm:p-3 rounded-xl bg-[var(--bg-secondary)]/50 border border-[var(--border-subtle)] text-[var(--text-main)] hover:text-primary transition-all active:scale-95 relative"
+                onClick={() => { setIsNotificationsOpen(!isNotificationsOpen); setIsProfileOpen(false); }}
+              >
+                <Bell size={18} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(255,106,0,0.8)]" />
+                )}
+              </button>
+
+              <button 
+                onClick={() => { setIsCartOpen(true); setIsProfileOpen(false); }}
+                className="p-2 sm:p-3 rounded-xl bg-[var(--bg-secondary)]/50 border border-[var(--border-subtle)] text-[var(--text-main)] hover:text-primary transition-all active:scale-95 relative"
+              >
+                <ShoppingCart size={18} />
+                {cartItems.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-black w-5 h-5 rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+                    {cartItems.length}
+                  </span>
+                )}
+              </button>
+
+              {user ? (
+                <div className="relative">
+                  <button 
+                    onClick={() => { setIsProfileOpen(!isProfileOpen); setIsNotificationsOpen(false); }}
+                    className={`flex items-center gap-2 p-1 pr-3 rounded-xl bg-[var(--bg-secondary)]/50 border transition-all active:scale-95 ${isProfileOpen ? 'border-primary' : 'border-[var(--border-subtle)]'}`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-inner overflow-hidden">
+                      {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name?.[0]}
+                    </div>
+                    <span className="hidden md:block text-xs font-bold text-[var(--text-main)]">{user.name?.split(' ')[0]}</span>
+                  </button>
+
+                  <AnimatePresence>
+                    {isProfileOpen && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute top-full right-0 mt-2 w-64 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl"
+                      >
+                        <div className="p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]/50">
+                          <p className="text-xs font-black text-primary uppercase tracking-widest mb-1">Authenticated</p>
+                          <p className="text-sm font-bold text-[var(--text-main)] truncate">{user.email}</p>
+                        </div>
+                        <div className="p-2">
+                          <button 
+                            onClick={() => { setCurrentView('profile'); setIsProfileOpen(false); }}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-bold text-[var(--text-main)] hover:bg-[var(--bg-secondary)] transition-colors"
+                          >
+                            <UserIcon size={16} className="text-primary" /> Profile Settings
+                          </button>
+                          <button 
+                            className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-bold text-[var(--text-main)] hover:bg-[var(--bg-secondary)] transition-colors"
+                            onClick={() => { setCurrentView('track-order'); setIsProfileOpen(false); }}
+                          >
+                            <Ticket size={16} className="text-primary" /> My Orders
+                          </button>
+                          <div className="h-px bg-[var(--border-subtle)] my-2" />
+                          <button 
+                            onClick={() => { logout(); setIsProfileOpen(false); }}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-500/10 transition-colors"
+                          >
+                            <LogOut size={16} /> Sign Out
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                >
+                  Access
+                </button>
+              )}
+            </div>
+
+            {/* Mobile Actions (Three Dots) */}
             <button 
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 sm:p-3 rounded-xl bg-[var(--bg-secondary)]/50 border border-[var(--border-subtle)] text-[var(--text-main)]"
+              className="lg:hidden p-2 sm:p-3 rounded-xl bg-[var(--bg-secondary)]/50 border border-[var(--border-subtle)] text-[var(--text-main)] hover:text-primary transition-all active:scale-95"
             >
-              <Menu size={18} />
+              <MoreVertical size={18} />
             </button>
           </div>
         </div>
@@ -439,6 +447,38 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                 </div>
 
                 <div className="flex-1">
+                  <div className="flex items-center justify-between gap-2 mb-8">
+                    <p className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-[0.2em]">Quick Actions</p>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => setIsDark(!isDark)}
+                        className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-main)]"
+                      >
+                        {isDark ? <Sun size={18} /> : <Moon size={18} />}
+                      </button>
+                      <button 
+                        onClick={() => { setIsCartOpen(true); setIsMobileMenuOpen(false); }}
+                        className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-main)] relative"
+                      >
+                        <ShoppingCart size={18} />
+                        {cartItems.length > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-black w-5 h-5 rounded-lg flex items-center justify-center">
+                            {cartItems.length}
+                          </span>
+                        )}
+                      </button>
+                      <button 
+                        onClick={() => { setIsNotificationsOpen(!isNotificationsOpen); setIsMobileMenuOpen(false); }}
+                        className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-main)] relative"
+                      >
+                        <Bell size={18} />
+                        {unreadCount > 0 && (
+                          <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
                   <p className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-[0.2em] mb-4">Navigation</p>
                   {navLinks.map((item) => (
                     <div key={item.name}>
@@ -447,6 +487,14 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                           if (item.name === 'Contact') {
                             setCurrentView('contact');
                             setActiveItem('Contact');
+                            setIsMobileMenuOpen(false);
+                          } else if (item.name === 'Comparison') {
+                            setCurrentView('compare');
+                            setActiveItem('Comparison');
+                            setIsMobileMenuOpen(false);
+                          } else if (item.name === 'Admin Panel') {
+                            setCurrentView('admin');
+                            setActiveItem('Admin Panel');
                             setIsMobileMenuOpen(false);
                           } else if (item.hasDropdown) {
                             setActiveItem(activeItem === item.name ? null : item.name);

@@ -14,15 +14,16 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react')) return 'vendor-react';
-            if (id.includes('framer-motion')) return 'vendor-motion';
+            if (id.includes('react')) return 'vendor-core';
+            if (id.includes('three')) return 'vendor-three';
+            if (id.includes('framer-motion')) return 'vendor-animation';
             if (id.includes('lucide-react')) return 'vendor-icons';
-            if (id.includes('three') || id.includes('@react-three')) return 'vendor-three';
-            return 'vendor';
+            if (id.includes('leaflet')) return 'vendor-maps';
+            return 'vendor-libs';
           }
         }
       }
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 600,
   }
 })

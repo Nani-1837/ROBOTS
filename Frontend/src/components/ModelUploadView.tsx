@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Upload, FileCode, CheckCircle, ArrowLeft, Globe, Layers, Box } from 'lucide-react';
 import ModelViewer from './ModelViewer';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 interface ModelUploadViewProps {
   onBack: () => void;
@@ -11,6 +12,7 @@ interface ModelUploadViewProps {
 
 export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -35,13 +37,18 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
   ];
 
   const handleFile = (e: any) => {
+    if (!user) {
+      showToast("Please login first to upload models.", 'error');
+      return;
+    }
+
     const selectedFile = e.target.files?.[0] || e.dataTransfer?.files?.[0];
     if (selectedFile) {
       // Check if file is GLB
       if (selectedFile.name.toLowerCase().endsWith('.glb')) {
-        // Check size (100MB limit for our Cloudinary configuration)
-        if (selectedFile.size > 100 * 1024 * 1024) {
-          showToast("File is too large. Maximum size is 100MB.", 'error');
+        // Check size (10MB limit for Cloudinary Free Plan)
+        if (selectedFile.size > 10 * 1024 * 1024) {
+          showToast("File is too large. Maximum size is 10MB for free plan.", 'error');
           return;
         }
         setFile(selectedFile);
@@ -60,6 +67,10 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      showToast('Please login to submit quotation request', 'error');
+      return;
+    }
     if (!file) {
       showToast('Please upload a 3D model file first', 'error');
       return;
@@ -219,7 +230,7 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
                       onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFile(e); }}
                       className={`w-full aspect-video border-2 border-dashed rounded-[2rem] transition-all flex flex-col items-center justify-center p-8 text-center ${
                         isDragging ? 'border-primary bg-primary/5 scale-[0.98]' : 'border-[var(--border-subtle)]'
-                      } ${file ? 'border-green-500 bg-green-500/5' : ''}`}
+                       } ${file ? 'border-green-500 bg-green-500/5' : ''}`}
                     >
                       {!file ? (
                         <>
@@ -227,7 +238,7 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
                             <Upload size={24} />
                           </div>
                           <h4 className="text-[var(--text-main)] font-bold text-sm mb-1">Upload .GLB Model</h4>
-                          <p className="text-[var(--text-muted)] text-[10px] mb-4">Only GLB files supported for live preview</p>
+                          <p className="text-[var(--text-muted)] text-[10px] mb-4">Max 10MB | Only GLB files supported</p>
                           <label className="bg-primary text-white font-bold px-4 py-2 rounded-xl cursor-pointer hover:bg-orange-600 transition-colors text-xs shadow-lg shadow-primary/20">
                             Select GLB File
                             <input type="file" className="hidden" accept=".glb" onChange={handleFile} />
@@ -248,6 +259,29 @@ export default function ModelUploadView({ onBack }: ModelUploadViewProps) {
                           </button>
                         </>
                       )}
+                    </div>
+
+                    {/* Optimization Tip */}
+                    <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl">
+                      <div className="flex gap-4">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Globe className="text-primary" size={18} />
+                        </div>
+                        <div>
+                          <h5 className="text-[var(--text-main)] font-bold text-xs mb-1">Optimization Tip (Recommended)</h5>
+                          <p className="text-[var(--text-muted)] text-[10px] leading-relaxed mb-2">
+                            If your model is larger than 10MB, please use <span className="text-primary font-bold">gltf.report</span> to compress it. Applying Draco compression significantly reduces file size without losing quality.
+                          </p>
+                          <a 
+                            href="https://gltf.report/" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary text-[10px] font-bold hover:underline flex items-center gap-1"
+                          >
+                            Go to gltf.report <ChevronRight size={10} />
+                          </a>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="p-6 bg-blue-500/5 border border-blue-500/20 rounded-2xl">

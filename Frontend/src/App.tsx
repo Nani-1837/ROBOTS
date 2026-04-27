@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -8,23 +8,25 @@ import Stats from './components/Stats';
 import NeuralArchitecture from './components/NeuralArchitecture';
 import ProductGrid from './components/ProductGrid';
 import Footer from './components/Footer';
-import CategoryView from './components/CategoryView';
-import CollegeProjectsView from './components/CollegeProjectsView';
-import ModelUploadView from './components/ModelUploadView';
-import ContactView from './components/ContactView';
 import Testimonials from './components/Testimonials';
 import Newsletter from './components/Newsletter';
-import TrackOrderView from './components/TrackOrderView';
-import CompareView from './components/CompareView';
 import TrustSection from './components/TrustSection';
 import FAQ from './components/FAQ';
 import SoundEffects from './components/SoundEffects';
-import ProductDetailView from './components/ProductDetailView';
-import AdminPanel from './components/AdminPanel';
-import CollegeProjectDetail from './components/CollegeProjectDetail';
-import ProfileView from './components/ProfileView';
-import CheckoutView from './components/CheckoutView';
 import './index.css';
+
+// Lazy load sub-views
+const CategoryView = lazy(() => import('./components/CategoryView'));
+const CollegeProjectsView = lazy(() => import('./components/CollegeProjectsView'));
+const ModelUploadView = lazy(() => import('./components/ModelUploadView'));
+const ContactView = lazy(() => import('./components/ContactView'));
+const TrackOrderView = lazy(() => import('./components/TrackOrderView'));
+const CompareView = lazy(() => import('./components/CompareView'));
+const ProductDetailView = lazy(() => import('./components/ProductDetailView'));
+const AdminPanel = lazy(() => import('./components/AdminPanel'));
+const CollegeProjectDetail = lazy(() => import('./components/CollegeProjectDetail'));
+const ProfileView = lazy(() => import('./components/ProfileView'));
+const CheckoutView = lazy(() => import('./components/CheckoutView'));
 
 
 import { useAuth } from './context/AuthContext';
@@ -101,6 +103,12 @@ function App() {
         setSelectedProduct={setSelectedProduct}
       />
       
+      <Suspense fallback={
+        <div className="fixed inset-0 flex flex-col items-center justify-center bg-[var(--bg-primary)] z-[1000]">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
+          <p className="text-xs font-bold text-primary animate-pulse tracking-widest uppercase">Initializing Core...</p>
+        </div>
+      }>
       <AnimatePresence mode="wait">
         {currentView === 'home' && (
           <motion.main 
@@ -289,20 +297,33 @@ function App() {
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.4 }}
           >
-            <CheckoutView 
-              cartItems={cartItems}
-              user={user}
-              onBack={() => setCurrentView('home')}
-              onSuccess={() => {
-                setCartItems([]);
-                setCurrentView('profile');
-                // Could pass orderId to ProfileView if needed
-              }}
-            />
+            {user ? (
+              <CheckoutView 
+                cartItems={cartItems}
+                user={user}
+                onBack={() => setCurrentView('home')}
+                onSuccess={() => {
+                  setCartItems([]);
+                  setCurrentView('profile');
+                }}
+              />
+            ) : (
+              <div className="max-w-4xl mx-auto py-32 text-center">
+                <h2 className="text-3xl font-bold mb-4">Authentication Required</h2>
+                <p className="text-[var(--text-muted)] mb-8">Please login to proceed with your order.</p>
+                <button 
+                  onClick={() => setCurrentView('home')}
+                  className="bg-primary text-white px-8 py-4 rounded-2xl font-bold"
+                >
+                  Back to Home
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
 
       </AnimatePresence>
+      </Suspense>
 
       <Footer setCurrentView={setCurrentView} setActiveCategory={setActiveCategory} />
       </div>

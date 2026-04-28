@@ -52,6 +52,7 @@ const AdminPanel = lazy(() => import('./components/AdminPanel'));
 const CollegeProjectDetail = lazy(() => import('./components/CollegeProjectDetail'));
 const ProfileView = lazy(() => import('./components/ProfileView'));
 const CheckoutView = lazy(() => import('./components/CheckoutView'));
+const PoliciesView = lazy(() => import('./components/PoliciesView'));
 
 import { useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
@@ -203,6 +204,11 @@ function App() {
                       />
                     ) : <Navigate to="/" />
                   } />
+
+                  <Route path="/terms" element={<PoliciesView type="terms" onBack={() => window.history.back()} />} />
+                  <Route path="/privacy" element={<PoliciesView type="privacy" onBack={() => window.history.back()} />} />
+                  <Route path="/refund" element={<PoliciesView type="refund" onBack={() => window.history.back()} />} />
+                  <Route path="/shipping" element={<PoliciesView type="shipping" onBack={() => window.history.back()} />} />
 
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>

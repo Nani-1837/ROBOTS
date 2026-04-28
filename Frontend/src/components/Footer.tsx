@@ -247,10 +247,11 @@ export default function Footer({ setActiveCategory }: { setActiveCategory?: (cat
           <p className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest">
             © 2026 BISONIX Robotics
           </p>
-          <div className="flex gap-8">
-            <a href="#" className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest hover:text-primary transition-colors">Privacy</a>
-            <a href="#" className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest hover:text-primary transition-colors">Terms</a>
-            <a href="#" className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest hover:text-primary transition-colors">Cookies</a>
+          <div className="flex gap-4 md:gap-8 flex-wrap justify-center">
+            <button onClick={() => { navigate('/privacy'); window.scrollTo(0,0); }} className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest hover:text-primary transition-colors">Privacy</button>
+            <button onClick={() => { navigate('/terms'); window.scrollTo(0,0); }} className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest hover:text-primary transition-colors">Terms</button>
+            <button onClick={() => { navigate('/refund'); window.scrollTo(0,0); }} className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest hover:text-primary transition-colors">Refund Policy</button>
+            <button onClick={() => { navigate('/shipping'); window.scrollTo(0,0); }} className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest hover:text-primary transition-colors">Shipping</button>
           </div>
         </div>
       </div>

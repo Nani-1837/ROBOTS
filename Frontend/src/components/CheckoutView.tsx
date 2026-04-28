@@ -20,6 +20,7 @@ export default function CheckoutView({ cartItems, onBack, onSuccess, user }: Che
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'UPI'>('COD');
   const [formData, setFormData] = useState({
     fullName: user?.name || '',
     phone: user?.phone || '',
@@ -109,7 +110,7 @@ export default function CheckoutView({ cartItems, onBack, onSuccess, user }: Che
           total,
           couponCode: appliedCoupon?.code || null,
           shippingAddress: formData,
-          paymentMethod: 'COD'
+          paymentMethod: paymentMethod
         })
       });
 
@@ -248,15 +249,52 @@ export default function CheckoutView({ cartItems, onBack, onSuccess, user }: Che
                   </div>
                 </div>
 
+                {/* Payment Methods */}
+                <div className="space-y-3 pt-2">
+                  <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Payment Method *</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('COD')}
+                      className={`p-4 rounded-2xl border text-sm font-bold flex flex-col items-center gap-2 transition-all ${
+                        paymentMethod === 'COD' 
+                          ? 'bg-primary/10 border-primary text-primary' 
+                          : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-main)] hover:border-primary/50'
+                      }`}
+                    >
+                      <Truck size={24} className={paymentMethod === 'COD' ? 'text-primary' : 'text-[var(--text-muted)]'} />
+                      Cash on Delivery
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('UPI')}
+                      className={`p-4 rounded-2xl border text-sm font-bold flex flex-col items-center gap-2 transition-all ${
+                        paymentMethod === 'UPI' 
+                          ? 'bg-primary/10 border-primary text-primary' 
+                          : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-main)] hover:border-primary/50'
+                      }`}
+                    >
+                      <CreditCard size={24} className={paymentMethod === 'UPI' ? 'text-primary' : 'text-[var(--text-muted)]'} />
+                      UPI Payment
+                    </button>
+                  </div>
+                  {paymentMethod === 'UPI' && (
+                    <div className="p-4 mt-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-500 text-xs font-bold flex items-start gap-2">
+                      <CheckCircle2 size={16} className="shrink-0" />
+                      <p>You will receive a Razorpay UPI link via Email/SMS shortly after placing the order.</p>
+                    </div>
+                  )}
+                </div>
+
                 {/* Submit */}
                 <button 
                   type="submit"
                   disabled={isLoading || cartItems.length === 0}
-                  className="w-full bg-gradient-to-r from-primary to-orange-600 text-white font-black py-5 rounded-[2rem] shadow-xl shadow-primary/20 hover:from-orange-600 hover:to-orange-500 transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50 mt-2"
+                  className="w-full bg-gradient-to-r from-primary to-orange-600 text-white font-black py-5 rounded-[2rem] shadow-xl shadow-primary/20 hover:from-orange-600 hover:to-orange-500 transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50 mt-4"
                 >
                   {isLoading 
                     ? <><Loader2 className="animate-spin" size={20} /> Placing Order...</>
-                    : <><CreditCard size={20} /> Confirm Order & Pay COD</>
+                    : <><CreditCard size={20} /> {paymentMethod === 'COD' ? 'Confirm Order (COD)' : 'Proceed to Pay (UPI)'}</>
                   }
                 </button>
               </form>

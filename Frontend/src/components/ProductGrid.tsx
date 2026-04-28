@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Heart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { API_URL } from '../config';
@@ -49,7 +50,10 @@ const ProductCard = ({ id, image, name, category, price, originalPrice, rating, 
       transition={{ delay, duration: 0.5 }}
       className="bg-[var(--bg-primary)] rounded-[2rem] border border-[var(--border-subtle)] overflow-hidden shadow-[var(--card-shadow)] hover:shadow-2xl transition-all duration-500 group flex flex-col card-premium"
     >
-      <div className="relative aspect-[1920/1080] bg-[var(--bg-secondary)]/30 overflow-hidden flex items-center justify-center">
+      <div 
+        className="relative aspect-[1920/1080] bg-[var(--bg-secondary)]/30 overflow-hidden flex items-center justify-center cursor-pointer"
+        onClick={() => onProductClick?.({ id, image, name, category, price, originalPrice, rating, numReviews })}
+      >
         <img 
           src={image} 
           alt={name} 
@@ -95,7 +99,7 @@ const ProductCard = ({ id, image, name, category, price, originalPrice, rating, 
           <div className="flex gap-3 pt-2">
             <button 
               onClick={handleWishlistClick}
-              className="flex-1 py-3.5 rounded-2xl bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] font-bold text-xs transition-all active:scale-95 btn-premium flex items-center justify-center gap-2"
+              className="flex-1 py-3.5 rounded-2xl btn-secondary font-bold text-xs active:scale-95 flex items-center justify-center gap-2"
             >
               <Heart size={14} className={isWishlisted ? "text-red-500 fill-red-500" : "text-red-500"} />
               Wishlist
@@ -103,9 +107,10 @@ const ProductCard = ({ id, image, name, category, price, originalPrice, rating, 
             <button 
               onClick={(e) => {
                 e.stopPropagation();
-                onProductClick?.(null); // This is just to satisfy the old prop if needed, but the loop is better
+                onProductClick?.({ id, image, name, category, price, originalPrice, rating, numReviews });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="flex-[1.5] py-3.5 rounded-2xl bg-gradient-to-r from-primary to-orange-600 hover:from-orange-600 hover:to-orange-500 text-white font-bold text-xs shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 btn-premium"
+              className="flex-[1.5] py-3.5 rounded-2xl btn-primary font-bold text-xs shadow-lg shadow-primary/20 active:scale-95 flex items-center justify-center gap-2"
             >
               View more
             </button>
@@ -118,6 +123,7 @@ const ProductCard = ({ id, image, name, category, price, originalPrice, rating, 
 
 
 export default function ProductGrid({ setActiveCategory, onProductClick }: { setActiveCategory: (cat: string) => void, onProductClick: (p: any) => void }) {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<any[]>([]);
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -195,7 +201,10 @@ export default function ProductGrid({ setActiveCategory, onProductClick }: { set
                     if (state) setWishlistIds(prev => [...prev, id]);
                     else setWishlistIds(prev => prev.filter(wid => wid !== id));
                   }}
-                  onProductClick={() => onProductClick?.(product)}
+                  onProductClick={() => {
+                    onProductClick?.(product);
+                    navigate('/product-detail');
+                  }}
                 />
               ))
             ) : null}
@@ -206,8 +215,11 @@ export default function ProductGrid({ setActiveCategory, onProductClick }: { set
           <motion.button 
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            onClick={() => setActiveCategory('Robo Toys')}
-            className="px-12 py-5 rounded-2xl border border-[var(--border-subtle)] text-[var(--text-main)] font-bold hover:bg-primary hover:text-white hover:border-primary transition-all duration-300"
+            onClick={() => {
+              setActiveCategory('Robo Toys');
+              navigate('/category');
+            }}
+            className="px-12 py-5 rounded-2xl btn-secondary font-bold text-sm shadow-sm active:scale-95"
           >
             Browse Full Collection
           </motion.button>

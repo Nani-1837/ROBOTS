@@ -10,6 +10,7 @@ const carsImg = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto
 const robotsImg = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282212/bisonix_assets/Robots.jpg";
 const collegeProjectsImg = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282213/bisonix_assets/College-Projects.jpg";
 const customBuildsImg = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282214/bisonix_assets/Custom%20Builds.jpg";
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config';
 
@@ -17,11 +18,11 @@ interface NavbarProps {
   cartItems: any[];
   setCartItems: (items: any[]) => void;
   setActiveCategory: (cat: string | null) => void;
-  setCurrentView: (view: any) => void;
   setSelectedProduct: (product: any) => void;
 }
 
-export default function Navbar({ cartItems, setCartItems, setActiveCategory, setCurrentView, setSelectedProduct }: NavbarProps) {
+export default function Navbar({ cartItems, setCartItems, setActiveCategory, setSelectedProduct }: NavbarProps) {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -188,7 +189,7 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
           <div 
             className="flex items-center cursor-pointer group"
             onClick={() => {
-              setCurrentView('home');
+              navigate('/');
               setActiveCategory(null);
               setSelectedProduct(null);
               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -208,13 +209,13 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                 onMouseLeave={() => setHoveredLink(null)}
                 onClick={() => {
                   if (item.name === 'Contact') {
-                    setCurrentView('contact');
+                    navigate('/contact');
                     setActiveItem('Contact');
                   } else if (item.name === 'Comparison') {
-                    setCurrentView('compare');
+                    navigate('/compare');
                     setActiveItem('Comparison');
                   } else if (item.name === 'Admin Panel') {
-                    setCurrentView('admin');
+                    navigate('/admin');
                     setActiveItem('Admin Panel');
                   }
                 }}
@@ -240,7 +241,7 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                             <div 
                               key={link.name} 
                               onClick={() => { 
-                                setCurrentView(link.view); 
+                                navigate(`/${link.view === 'home' ? '' : link.view}`); 
                                 if (link.cat) setActiveCategory(link.cat);
                                 setHoveredLink(null); 
                               }}
@@ -258,7 +259,7 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                               <div 
                                 key={idx} 
                                 onClick={() => {
-                                  setCurrentView(subItem.view);
+                                  navigate(`/${subItem.view}`);
                                   if (subItem.category) setActiveCategory(subItem.category);
                                   if (subItem.product) setSelectedProduct(subItem.product);
                                   setHoveredLink(null);
@@ -316,7 +317,7 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
               >
                 <ShoppingCart size={18} />
                 {cartItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-black w-5 h-5 rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+                  <span className="absolute -top-1 -right-1 bg-[#FF6A00] text-black dark:text-white text-[10px] font-black w-5 h-5 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20">
                     {cartItems.length}
                   </span>
                 )}
@@ -348,14 +349,14 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                         </div>
                         <div className="p-2">
                           <button 
-                            onClick={() => { setCurrentView('profile'); setIsProfileOpen(false); }}
+                            onClick={() => { navigate('/profile'); setIsProfileOpen(false); }}
                             className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-bold text-[var(--text-main)] hover:bg-[var(--bg-secondary)] transition-colors"
                           >
                             <UserIcon size={16} className="text-primary" /> Profile Settings
                           </button>
                           <button 
                             className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-bold text-[var(--text-main)] hover:bg-[var(--bg-secondary)] transition-colors"
-                            onClick={() => { setCurrentView('track-order'); setIsProfileOpen(false); }}
+                            onClick={() => { navigate('/track-order'); setIsProfileOpen(false); }}
                           >
                             <Ticket size={16} className="text-primary" /> My Orders
                           </button>
@@ -462,7 +463,7 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                       >
                         <ShoppingCart size={18} />
                         {cartItems.length > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-black w-5 h-5 rounded-lg flex items-center justify-center">
+                          <span className="absolute -top-1 -right-1 bg-[#FF6A00] text-black dark:text-white text-[10px] font-black w-5 h-5 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20">
                             {cartItems.length}
                           </span>
                         )}
@@ -485,15 +486,15 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                       <button 
                         onClick={() => {
                           if (item.name === 'Contact') {
-                            setCurrentView('contact');
+                            navigate('/contact');
                             setActiveItem('Contact');
                             setIsMobileMenuOpen(false);
                           } else if (item.name === 'Comparison') {
-                            setCurrentView('compare');
+                            navigate('/compare');
                             setActiveItem('Comparison');
                             setIsMobileMenuOpen(false);
                           } else if (item.name === 'Admin Panel') {
-                            setCurrentView('admin');
+                            navigate('/admin');
                             setActiveItem('Admin Panel');
                             setIsMobileMenuOpen(false);
                           } else if (item.hasDropdown) {
@@ -518,7 +519,7 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                             <button 
                               key={idx}
                               onClick={() => { 
-                                setCurrentView(subItem.view); 
+                                navigate(`/${subItem.view}`); 
                                 if (subItem.category) setActiveCategory(subItem.category);
                                 if (subItem.product) setSelectedProduct(subItem.product);
                                 setIsMobileMenuOpen(false); 
@@ -548,7 +549,7 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
                         </div>
                       </div>
                       <button 
-                        onClick={() => { setCurrentView('profile'); setIsMobileMenuOpen(false); }}
+                        onClick={() => { navigate('/profile'); setIsMobileMenuOpen(false); }}
                         className="w-full flex items-center gap-3 p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-sm font-bold text-[var(--text-main)]"
                       >
                         <Settings size={18} className="text-primary" /> Profile Settings
@@ -579,7 +580,7 @@ export default function Navbar({ cartItems, setCartItems, setActiveCategory, set
       </motion.nav>
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} setCartItems={setCartItems} setCurrentView={setCurrentView} />
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} setCartItems={setCartItems} />
       <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       <motion.a

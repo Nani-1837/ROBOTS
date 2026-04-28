@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../context/ToastContext';
-import { 
-  Users, ShoppingBag, Package, 
-  TrendingUp, RefreshCcw, Eye, Shield, 
+import {
+  Users, ShoppingBag, Package,
+  TrendingUp, RefreshCcw, Eye, Shield,
   ChevronRight, Plus, X, Upload, Trash2, Edit,
   CheckCircle2, Truck, Award, GraduationCap, Ticket, Calendar, DollarSign, MapPin, Share2
 } from 'lucide-react';
 import { API_URL } from '../config';
 import MapView from './MapView';
+import UsersTab from './admin/UsersTab';
+import ProductsTab from './admin/ProductsTab';
 
 
 
@@ -108,7 +110,7 @@ export default function AdminPanel() {
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
 
 
-  
+
   // Multi-step Form State
   const [currentStep, setCurrentStep] = useState(1);
   const [productForm, setProductForm] = useState({
@@ -123,7 +125,8 @@ export default function AdminPanel() {
     deliveryInfo: 'Express Delivery',
     colors: ['Red', 'White', 'Black'] as string[],
     specs: [] as { key: string, value: string }[],
-    existingImages: [] as string[]
+    existingImages: [] as string[],
+    dimensions: { value: '', unit: 'mm' }
   });
   const [productImages, setProductImages] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -165,11 +168,6 @@ export default function AdminPanel() {
     } catch (error) {
       return 'Custom Color';
     }
-  };
-
-  // Helper to map assets for products in admin
-  const getLocalImage = (product: any) => {
-    return (product.images && product.images.length > 0) ? product.images[0] : '';
   };
 
   useEffect(() => {
@@ -252,11 +250,11 @@ export default function AdminPanel() {
       const token = localStorage.getItem('insforgeToken');
       const response = await fetch(`${API_URL}/api/orders/${id}/status`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           status: trackingUpdate.status,
           tracking: {
             location: trackingUpdate.location,
@@ -290,9 +288,9 @@ export default function AdminPanel() {
       const token = localStorage.getItem('insforgeToken');
       const response = await fetch(`${API_URL}/api/coupons`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(couponForm)
       });
@@ -323,7 +321,7 @@ export default function AdminPanel() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
-      
+
       // Check for large files (> 10MB)
       const largeFiles = filesArray.filter(file => file.size > 10 * 1024 * 1024);
       if (largeFiles.length > 0) {
@@ -346,7 +344,7 @@ export default function AdminPanel() {
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       const formData = new FormData();
       formData.append('name', productForm.name);
@@ -359,22 +357,23 @@ export default function AdminPanel() {
       formData.append('warranty', productForm.warranty);
       formData.append('deliveryInfo', productForm.deliveryInfo);
       formData.append('colors', JSON.stringify(productForm.colors));
-      
+      formData.append('dimensions', JSON.stringify(productForm.dimensions));
+
       const specsObj: Record<string, string> = {};
       productForm.specs.forEach(s => {
         if (s.key && s.value) specsObj[s.key] = s.value;
       });
       formData.append('specs', JSON.stringify(specsObj));
-      
+
       productImages.forEach((file) => {
         formData.append('images', file);
       });
 
       const token = localStorage.getItem('insforgeToken');
-      const url = editingProductId 
+      const url = editingProductId
         ? `${API_URL}/api/products/${editingProductId}`
         : `${API_URL}/api/products`;
-      
+
       const method = editingProductId ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -418,10 +417,10 @@ export default function AdminPanel() {
       productImages.forEach(file => formData.append('images', file));
 
       const token = localStorage.getItem('insforgeToken');
-      const url = editingCollegeProjectId 
+      const url = editingCollegeProjectId
         ? `${API_URL}/api/college-projects/${editingCollegeProjectId}`
         : `${API_URL}/api/college-projects`;
-      
+
       const response = await fetch(url, {
         method: editingCollegeProjectId ? 'PUT' : 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
@@ -475,7 +474,8 @@ export default function AdminPanel() {
       warranty: product.warranty || '2 Year Warranty',
       deliveryInfo: product.deliveryInfo || 'Express Delivery',
       colors: product.colors || ['Red', 'White', 'Black'],
-      existingImages: product.images || []
+      existingImages: product.images || [],
+      dimensions: product.dimensions || { value: '', unit: 'mm' }
     });
     setProductImages([]);
     setIsProductModalOpen(true);
@@ -496,23 +496,13 @@ export default function AdminPanel() {
       deliveryInfo: 'Express Delivery',
       colors: ['Red', 'White', 'Black'],
       specs: [],
-      existingImages: []
+      existingImages: [],
+      dimensions: { value: '', unit: 'mm' }
     });
     setProductImages([]);
     setCurrentStep(1);
   };
 
-  const deleteProduct = async (id: string) => {
-    if (!window.confirm('Delete this product?')) return;
-    try {
-      const token = localStorage.getItem('insforgeToken');
-      const response = await fetch(`${API_URL}/api/products/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) fetchProducts();
-    } catch (error) { console.error('Error deleting product:', error); }
-  };
 
   const formatCurrency = (num: number) => {
     if (num >= 100000) return `₹${(num / 100000).toFixed(1)}L`;
@@ -532,16 +522,16 @@ export default function AdminPanel() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-          <h1 className="text-4xl font-black text-slate-900 mb-2">Platform Console</h1>
-          <div className="flex items-center gap-2 text-slate-500 text-sm">
+          <h1 className="text-4xl font-black text-[var(--text-main)] mb-2">Platform Console</h1>
+          <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm">
             <Shield size={14} className="text-primary" />
             <span>Root Admin Access</span>
-            <span className="w-1 h-1 bg-slate-300 rounded-full" />
+            <span className="w-1 h-1 bg-[var(--text-muted)] rounded-full opacity-30" />
             <span>Last sync: Just now</span>
           </div>
         </motion.div>
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={() => {
               if (activeTab === 'users') fetchUsers();
               if (activeTab === 'products') fetchProducts();
@@ -549,7 +539,7 @@ export default function AdminPanel() {
               if (activeTab === 'battle') fetchBattle();
             }}
 
-            className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm hover:shadow-md transition-all"
+            className="flex items-center gap-2 px-6 py-3 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl text-sm font-bold text-[var(--text-main)] shadow-sm hover:shadow-md transition-all"
           >
             <RefreshCcw size={16} />
             Refresh Control
@@ -565,13 +555,13 @@ export default function AdminPanel() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.1 }}
-            className="p-4 sm:p-6 bg-white border border-slate-100 rounded-[32px] shadow-sm group hover:shadow-xl transition-all duration-500"
+            className="p-4 sm:p-6 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-[32px] shadow-sm group hover:shadow-xl transition-all duration-500"
           >
-            <div className={`p-3 rounded-2xl bg-slate-50 ${stat.color} w-fit mb-4`}>
+            <div className={`p-3 rounded-2xl bg-[var(--bg-primary)] ${stat.color} w-fit mb-4`}>
               <stat.icon size={24} />
             </div>
-            <p className="text-slate-400 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mb-1">{stat.label}</p>
-            <h3 className="text-xl sm:text-3xl font-black text-slate-900">{stat.value}</h3>
+            <p className="text-[var(--text-muted)] text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mb-1">{stat.label}</p>
+            <h3 className="text-xl sm:text-3xl font-black text-[var(--text-main)]">{stat.value}</h3>
           </motion.div>
         ))}
       </div>
@@ -592,11 +582,10 @@ export default function AdminPanel() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-6 py-4 rounded-2xl text-sm font-bold transition-all whitespace-nowrap ${
-              activeTab === tab.id 
-                ? 'bg-primary text-white shadow-lg shadow-primary/20' 
-                : 'text-slate-500 hover:bg-white hover:text-slate-900'
-            }`}
+            className={`flex items-center gap-2 px-6 py-4 rounded-2xl text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab.id
+                ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                : 'text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-main)]'
+              }`}
           >
             <tab.icon size={18} />
             {tab.label}
@@ -607,46 +596,24 @@ export default function AdminPanel() {
       {/* Content Area */}
       <div className="min-h-[500px]">
         {activeTab === 'users' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {users.map((user) => (
-              <div key={user._id} className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-sm hover:shadow-xl transition-all cursor-pointer group" onClick={() => { setSelectedUser(user); setIsDetailsModalOpen(true); }}>
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-2xl bg-slate-100 overflow-hidden flex items-center justify-center text-slate-400 font-bold ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
-                    {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <span>{user.name.charAt(0).toUpperCase()}</span>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-black text-slate-900 truncate">{user.name}</h4>
-                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest">{user.role}</p>
-                  </div>
-                  <div className="p-2 text-slate-300 group-hover:text-primary transition-colors">
-                    <Eye size={20} />
-                  </div>
-                </div>
-                <p className="text-sm text-slate-500 truncate mb-4">{user.email}</p>
-                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
-                  <Truck size={12} />
-                  <span>{user.phone || 'No phone'}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <UsersTab onUserClick={(user) => { setSelectedUser(user); setIsDetailsModalOpen(true); }} />
         )}
 
         {activeTab === 'referrals' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {users.filter(u => (u as any).referralCode || (u as any).referredBy).length > 0 ? (
               users.filter(u => (u as any).referralCode || (u as any).referredBy).map((user) => (
-                <div key={user._id} className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-sm hover:shadow-xl transition-all cursor-pointer group" onClick={() => { setSelectedUser(user); setIsDetailsModalOpen(true); }}>
+                <div key={user._id} className="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-[32px] p-6 shadow-sm hover:shadow-xl transition-all cursor-pointer group" onClick={() => { setSelectedUser(user); setIsDetailsModalOpen(true); }}>
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold">
                       {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover rounded-2xl" /> : <Share2 size={20} />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-black text-slate-900 truncate">{user.name}</h4>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{user.email}</p>
+                      <h4 className="font-black text-[var(--text-main)] truncate">{user.name}</h4>
+                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest truncate">{user.email}</p>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2 pt-4 border-t border-slate-50">
                     {(user as any).referralCode && (
                       <div className="flex items-center justify-between">
@@ -656,8 +623,8 @@ export default function AdminPanel() {
                     )}
                     {(user as any).referredBy && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Referred By</span>
-                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-lg truncate max-w-[120px]" title={(user as any).referredBy}>
+                        <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Referred By</span>
+                        <span className="text-[10px] font-bold text-[var(--text-main)] bg-[var(--bg-primary)] px-2 py-1 rounded-lg truncate max-w-[120px]" title={(user as any).referredBy}>
                           {(user as any).referredBy}
                         </span>
                       </div>
@@ -675,12 +642,19 @@ export default function AdminPanel() {
           </div>
         )}
 
+        {activeTab === 'products' && (
+          <ProductsTab
+            onEdit={handleEditProduct}
+            onAdd={() => { resetForm(); setIsProductModalOpen(true); }}
+          />
+        )}
+
         {activeTab === 'services' && (
           <div className="space-y-6">
-            <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm">
+            <div className="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-[32px] p-8 shadow-sm">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-black text-slate-900">Order Pipeline</h3>
-                <button onClick={fetchOrders} className="p-2 text-slate-400 hover:text-primary transition-colors">
+                <h3 className="text-2xl font-black text-[var(--text-main)]">Order Pipeline</h3>
+                <button onClick={fetchOrders} className="p-2 text-[var(--text-muted)] hover:text-primary transition-colors">
                   <RefreshCcw size={18} />
                 </button>
               </div>
@@ -694,30 +668,30 @@ export default function AdminPanel() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
-                      <tr className="border-b border-slate-50">
-                        <th className="pb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Order ID</th>
-                        <th className="pb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer</th>
-                        <th className="pb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
-                        <th className="pb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                        <th className="pb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                        <th className="pb-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Action</th>
+                      <tr className="border-b border-[var(--border-subtle)]">
+                        <th className="pb-4 px-4 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Order ID</th>
+                        <th className="pb-4 px-4 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Customer</th>
+                        <th className="pb-4 px-4 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Amount</th>
+                        <th className="pb-4 px-4 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Status</th>
+                        <th className="pb-4 px-4 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Date</th>
+                        <th className="pb-4 px-4 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50">
-                      {orders.map((order) => (
-                        <tr key={order._id} className="group hover:bg-slate-50/50 transition-colors">
-                          <td className="py-5 font-bold text-sm text-slate-900 px-4">#{order.orderId}</td>
+                    <tbody className="divide-y divide-[var(--border-subtle)]">
+                      {orders.map((order: any) => (
+                        <tr key={order._id} className="group hover:bg-primary/5 transition-colors">
+                          <td className="py-5 font-bold text-sm text-[var(--text-main)] px-4">#{order.orderId}</td>
                           <td className="py-5 px-4">
-                            <div 
+                            <div
                               className="flex items-center gap-3 cursor-pointer group/user"
-                              onClick={() => { 
+                              onClick={() => {
                                 if (order.user) {
-                                  setSelectedUser(order.user); 
-                                  setIsDetailsModalOpen(true); 
+                                  setSelectedUser(order.user);
+                                  setIsDetailsModalOpen(true);
                                 }
                               }}
                             >
-                              <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center text-slate-400 font-bold border border-slate-100 group-hover/user:border-primary/30 transition-all">
+                              <div className="w-10 h-10 rounded-xl bg-[var(--bg-primary)] overflow-hidden flex items-center justify-center text-[var(--text-muted)] font-bold border border-[var(--border-subtle)] group-hover/user:border-primary/30 transition-all">
                                 {order.user?.avatar ? (
                                   <img src={order.user.avatar} className="w-full h-full object-cover" />
                                 ) : (
@@ -725,8 +699,8 @@ export default function AdminPanel() {
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <p className="font-bold text-sm text-slate-900 group-hover/user:text-primary transition-colors">{order.user?.name || 'Customer'}</p>
-                                <p className="text-[10px] text-slate-400 truncate max-w-[120px]">{order.user?.email}</p>
+                                <p className="font-bold text-sm text-[var(--text-main)] group-hover/user:text-primary transition-colors">{order.user?.name || 'Customer'}</p>
+                                <p className="text-[10px] text-[var(--text-muted)] truncate max-w-[120px]">{order.user?.email}</p>
                               </div>
                             </div>
                           </td>
@@ -739,16 +713,15 @@ export default function AdminPanel() {
                             )}
                           </td>
                           <td className="py-5 px-4">
-                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                              order.orderStatus === 'Delivered' ? 'bg-green-500/10 text-green-500' : 
-                              order.orderStatus === 'Cancelled' ? 'bg-red-500/10 text-red-500' : 'bg-orange-500/10 text-orange-500'
-                            }`}>{order.orderStatus}</span>
+                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${order.orderStatus === 'Delivered' ? 'bg-green-500/10 text-green-500' :
+                                order.orderStatus === 'Cancelled' ? 'bg-red-500/10 text-red-500' : 'bg-orange-500/10 text-orange-500'
+                              }`}>{order.orderStatus}</span>
                           </td>
                           <td className="py-5 px-4 text-[10px] text-slate-400 font-medium">
-                            {new Date(order.createdAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}
+                            {new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </td>
                           <td className="py-5 px-4">
-                            <button 
+                            <button
                               onClick={() => { setSelectedOrder(order); setTrackingUpdate({ status: order.orderStatus, location: '', description: '' }); }}
                               className="p-2.5 bg-slate-50 text-slate-400 hover:text-primary hover:bg-white hover:shadow-sm rounded-xl transition-all"
                             >
@@ -764,85 +737,14 @@ export default function AdminPanel() {
             </div>
           </div>
         )}
-
-        {activeTab === 'products' && (
-          <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
-              <div>
-                <h3 className="text-2xl font-black text-slate-900">Inventory</h3>
-                <p className="text-sm text-slate-500">Manage and list your robotics & 3D catalog.</p>
-              </div>
-              <button 
-                onClick={() => { resetForm(); setIsProductModalOpen(true); }}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-primary text-white rounded-2xl font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all"
-              >
-                <Plus size={20} />
-                List New Product
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {products.map((product) => (
-                <div key={product._id} className="bg-white border border-slate-100 rounded-[40px] overflow-hidden shadow-sm group hover:shadow-2xl transition-all duration-500">
-                  <div className="aspect-[4/3] relative overflow-hidden">
-                    <img src={getLocalImage(product)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                    <div className="absolute top-4 left-4 flex gap-2">
-                      <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
-                        {typeof product.category === 'object' ? product.category.name : 'Uncategorized'}
-                      </span>
-                      {product.stock <= 5 && (
-                        <span className="px-3 py-1 bg-red-500/90 backdrop-blur-md text-white rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
-                          Low Stock
-                        </span>
-                      )}
-                    </div>
-                    <div className="absolute top-4 right-4 flex gap-2">
-                      <button onClick={() => handleEditProduct(product)} className="p-2.5 bg-white/90 backdrop-blur-md rounded-full text-slate-900 hover:bg-white transition-all shadow-sm">
-                        <Edit size={16} />
-                      </button>
-                      <button onClick={() => deleteProduct(product._id)} className="p-2.5 bg-red-500/90 backdrop-blur-md rounded-full text-white hover:bg-red-600 transition-all shadow-sm">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <h4 className="text-xl font-black text-slate-900 mb-2 truncate">{product.name}</h4>
-                    <div className="flex items-center gap-3">
-                      <p className="text-2xl font-black text-primary">₹{product.price}</p>
-                      {product.originalPrice && (
-                        <p className="text-sm text-slate-400 line-through">₹{product.originalPrice}</p>
-                      )}
-                    </div>
-                    <div className="mt-6 flex items-center justify-between pt-6 border-t border-slate-50">
-                      <div className="flex items-center gap-2">
-                        <div className="flex -space-x-2">
-                          {product.images.slice(0, 3).map((img, i) => (
-                            <img key={i} src={img} className="w-8 h-8 rounded-full border-2 border-white object-cover" />
-                          ))}
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">
-                          {product.images.length > 1 ? `+${product.images.length - 1} More` : 'Main Photo'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-green-500 uppercase tracking-widest">
-                        <Award size={12} />
-                        <span>In Stock</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
         {activeTab === 'college-projects' && (
           <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--bg-secondary)] p-6 rounded-[32px] border border-[var(--border-subtle)] shadow-sm">
               <div>
-                <h3 className="text-2xl font-black text-slate-900">Academic Catalog</h3>
-                <p className="text-sm text-slate-500">Manage your college project support kits.</p>
+                <h3 className="text-2xl font-black text-[var(--text-main)]">Academic Catalog</h3>
+                <p className="text-sm text-[var(--text-muted)]">Manage your college project support kits.</p>
               </div>
-              <button 
+              <button
                 onClick={() => { resetCollegeProjectForm(); setIsCollegeProjectModalOpen(true); }}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-primary text-white rounded-2xl font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all"
               >
@@ -874,7 +776,7 @@ export default function AdminPanel() {
                     </div>
                   </div>
                   <div className="p-6">
-                    <h4 className="text-xl font-black text-slate-900 mb-2 truncate">{project.name}</h4>
+                    <h4 className="text-xl font-black text-[var(--text-main)] mb-2 truncate">{project.name}</h4>
                     <p className="text-2xl font-black text-primary">₹{project.price}</p>
                   </div>
                 </div>
@@ -890,7 +792,7 @@ export default function AdminPanel() {
                 <h3 className="text-2xl font-black text-slate-900">Promo Engine</h3>
                 <p className="text-sm text-slate-500">Generate and track discount coupons.</p>
               </div>
-              <button 
+              <button
                 onClick={() => setIsCouponModalOpen(true)}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-primary text-white rounded-2xl font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all"
               >
@@ -901,20 +803,20 @@ export default function AdminPanel() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {coupons.map((coupon) => (
-                <div key={coupon._id} className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-sm group hover:shadow-xl transition-all relative overflow-hidden">
+                <div key={coupon._id} className="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-[32px] p-6 shadow-sm group hover:shadow-xl transition-all relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-[100%] -mr-8 -mt-8 transition-all group-hover:scale-150" />
                   <div className="flex items-center justify-between mb-6 relative">
-                    <div className="p-3 bg-slate-50 rounded-2xl text-primary">
+                    <div className="p-3 bg-[var(--bg-primary)] rounded-2xl text-primary">
                       <Ticket size={24} />
                     </div>
-                    <button onClick={() => deleteCoupon(coupon._id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                    <button onClick={() => deleteCoupon(coupon._id)} className="p-2 text-[var(--text-muted)] hover:text-red-500 transition-colors">
                       <Trash2 size={20} />
                     </button>
                   </div>
-                  <h4 className="text-2xl font-black text-slate-900 mb-2 font-display">{coupon.code}</h4>
+                  <h4 className="text-2xl font-black text-[var(--text-main)] mb-2 font-display">{coupon.code}</h4>
                   <p className="text-lg font-bold text-primary mb-4">₹{coupon.discountAmount} OFF</p>
-                  <div className="flex items-center gap-4 pt-4 border-t border-slate-50">
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
+                  <div className="flex items-center gap-4 pt-4 border-t border-[var(--border-subtle)]">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--text-muted)] uppercase">
                       <Calendar size={12} />
                       <span>Exp: {new Date(coupon.expiryDate).toLocaleDateString()}</span>
                     </div>
@@ -930,14 +832,14 @@ export default function AdminPanel() {
         )}
 
         {activeTab === 'battle' && (
-          <div className="max-w-2xl mx-auto bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm">
-            <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-50">
+          <div className="max-w-2xl mx-auto bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-[32px] p-8 shadow-sm">
+            <div className="flex items-center gap-4 mb-8 pb-6 border-b border-[var(--border-subtle)]">
               <div className="p-3 bg-primary/10 rounded-2xl text-primary">
                 <RefreshCcw size={24} />
               </div>
               <div>
-                <h3 className="text-2xl font-black text-slate-900">Battle of the Bots</h3>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Global Comparison Management</p>
+                <h3 className="text-2xl font-black text-[var(--text-main)]">Battle of the Bots</h3>
+                <p className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-widest">Global Comparison Management</p>
               </div>
             </div>
 
@@ -947,10 +849,10 @@ export default function AdminPanel() {
                 <div className="space-y-4">
                   <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Fighter 1 (Left Side)</label>
                   <div className="space-y-3">
-                    <select 
-                      className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:border-primary"
+                    <select
+                      className="w-full p-4 bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-2xl text-sm font-bold text-[var(--text-main)] outline-none focus:border-primary"
                       value={battleForm.product1Id}
-                      onChange={e => setBattleForm({...battleForm, product1Id: e.target.value})}
+                      onChange={e => setBattleForm({ ...battleForm, product1Id: e.target.value })}
                     >
                       <option value="">Select Product...</option>
                       {products.map(p => (
@@ -958,10 +860,10 @@ export default function AdminPanel() {
                       ))}
                     </select>
                     {battleForm.product1Id && (
-                      <div className="p-4 bg-slate-50 rounded-2xl flex items-center gap-4">
+                      <div className="p-4 bg-[var(--bg-primary)] rounded-2xl flex items-center gap-4">
                         <img src={products.find(p => p._id === battleForm.product1Id)?.images[0]} className="w-16 h-16 rounded-xl object-cover" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-slate-900 truncate">{products.find(p => p._id === battleForm.product1Id)?.name}</p>
+                          <p className="text-xs font-bold text-[var(--text-main)] truncate">{products.find(p => p._id === battleForm.product1Id)?.name}</p>
                           <p className="text-[10px] text-primary font-black uppercase">₹{products.find(p => p._id === battleForm.product1Id)?.price.toLocaleString()}</p>
                         </div>
                       </div>
@@ -973,10 +875,10 @@ export default function AdminPanel() {
                 <div className="space-y-4">
                   <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Fighter 2 (Right Side)</label>
                   <div className="space-y-3">
-                    <select 
+                    <select
                       className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:border-primary"
                       value={battleForm.product2Id}
-                      onChange={e => setBattleForm({...battleForm, product2Id: e.target.value})}
+                      onChange={e => setBattleForm({ ...battleForm, product2Id: e.target.value })}
                     >
                       <option value="">Select Product...</option>
                       {products.map(p => (
@@ -1003,9 +905,9 @@ export default function AdminPanel() {
                 </p>
               </div>
 
-              <button 
+              <button
                 type="submit"
-                className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3"
+                className="w-full py-5 bg-primary text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3"
               >
                 <Award size={20} />
                 Confirm Battle Matchup
@@ -1021,40 +923,40 @@ export default function AdminPanel() {
       <AnimatePresence>
         {isProductModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProductModalOpen(false)} className="fixed inset-0 bg-slate-900/40 backdrop-blur-md" />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-              animate={{ opacity: 1, scale: 1, y: 0 }} 
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProductModalOpen(false)} className="fixed inset-0 bg-black/60 backdrop-blur-md" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-100"
+              className="relative w-full max-w-2xl bg-[var(--bg-secondary)] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-[var(--border-subtle)]"
             >
               {/* Reference Style Header */}
               <div className="px-10 pt-10 pb-6">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-4">
-                    <div className="p-3 bg-slate-50 rounded-xl">
-                      <ShoppingBag className="text-slate-900" size={24} />
+                    <div className="p-3 bg-[var(--bg-primary)] rounded-xl">
+                      <ShoppingBag className="text-[var(--text-main)]" size={24} />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Create New Product</h3>
-                      <p className="text-sm text-slate-500 mt-1">Set up a new product listing to start organizing your catalog.</p>
+                      <h3 className="text-2xl font-bold text-[var(--text-main)] tracking-tight">Create New Product</h3>
+                      <p className="text-sm text-[var(--text-muted)] mt-1">Set up a new product listing to start organizing your catalog.</p>
                     </div>
                   </div>
-                  <button onClick={() => setIsProductModalOpen(false)} className="p-2 text-slate-300 hover:text-slate-900 transition-colors"><X size={20} /></button>
+                  <button onClick={() => setIsProductModalOpen(false)} className="p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"><X size={20} /></button>
                 </div>
-                <div className="h-px bg-slate-100 w-full mt-6" />
+                <div className="h-px bg-[var(--border-subtle)] w-full mt-6" />
               </div>
 
               {/* Step Progress - Minimal */}
               <div className="px-10 mb-4 flex items-center gap-4">
-                <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }} 
-                    animate={{ width: `${(currentStep / 4) * 100}%` }} 
+                <div className="flex-1 h-1 bg-[var(--bg-primary)] rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(currentStep / 4) * 100}%` }}
                     className="h-full bg-primary"
                   />
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Phase {currentStep}/4</span>
+                <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Phase {currentStep}/4</span>
               </div>
 
               {/* Form Content */}
@@ -1063,12 +965,12 @@ export default function AdminPanel() {
                   {currentStep === 1 && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
                       <div className="space-y-2">
-                        <label className="text-[13px] font-bold text-slate-700">Product Name <span className="text-red-500">*</span></label>
-                        <input required type="text" value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} className="w-full bg-slate-50/50 border border-slate-100 rounded-xl py-3 px-4 text-sm text-slate-900 focus:bg-white focus:border-primary/50 outline-none transition-all placeholder:text-slate-400" placeholder="Enter product name" />
+                        <label className="text-[13px] font-bold text-[var(--text-main)]">Product Name <span className="text-red-500">*</span></label>
+                        <input required type="text" value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl py-3 px-4 text-sm text-[var(--text-main)] focus:bg-[var(--bg-secondary)] focus:border-primary/50 outline-none transition-all placeholder:text-[var(--text-muted)]" placeholder="Enter product name" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[13px] font-bold text-slate-700">Description <span className="text-red-500">*</span></label>
-                        <textarea required rows={5} value={productForm.description} onChange={e => setProductForm({...productForm, description: e.target.value})} className="w-full bg-slate-50/50 border border-slate-100 rounded-xl py-3 px-4 text-sm text-slate-600 focus:bg-white focus:border-primary/50 outline-none transition-all resize-none" placeholder="Describe the product features and specifications" />
+                        <label className="text-[13px] font-bold text-[var(--text-main)]">Description <span className="text-red-500">*</span></label>
+                        <textarea required rows={5} value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xl py-3 px-4 text-sm text-[var(--text-main)] focus:bg-[var(--bg-secondary)] focus:border-primary/50 outline-none transition-all resize-none" placeholder="Describe the product features and specifications" />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[13px] font-bold text-slate-700">Category <span className="text-red-500">*</span></label>
@@ -1081,7 +983,7 @@ export default function AdminPanel() {
                             {isCategoryDropdownOpen && (
                               <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }} className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-xl shadow-xl z-[110] p-1 overflow-hidden">
                                 {categories.map(c => (
-                                  <button key={c._id} type="button" onClick={() => { setProductForm({...productForm, category: c._id}); setIsCategoryDropdownOpen(false); }} className="w-full text-left px-4 py-2 rounded-lg hover:bg-primary/10 hover:text-primary text-[13px] font-medium text-slate-600">
+                                  <button key={c._id} type="button" onClick={() => { setProductForm({ ...productForm, category: c._id }); setIsCategoryDropdownOpen(false); }} className="w-full text-left px-4 py-2 rounded-lg hover:bg-primary/10 hover:text-primary text-[13px] font-medium text-slate-600">
                                     {c.name}
                                   </button>
                                 ))}
@@ -1097,40 +999,54 @@ export default function AdminPanel() {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
                       <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <label className="text-[13px] font-bold text-slate-700">Sale Price (₹) <span className="text-red-500">*</span></label>
-                          <input required type="number" value={productForm.price} onChange={e => setProductForm({...productForm, price: e.target.value})} className="w-full bg-slate-50/50 border border-slate-100 rounded-xl py-3 px-4 text-sm" placeholder="0.00" />
+                          <label className="text-[13px] font-bold text-[var(--text-main)]">Sale Price (₹) <span className="text-red-500">*</span></label>
+                          <input required type="number" value={productForm.price} onChange={e => setProductForm({ ...productForm, price: e.target.value })} className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-xl py-3 px-4 text-sm" placeholder="0.00" />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[13px] font-bold text-slate-700">Original Price (₹)</label>
-                          <input type="number" value={productForm.originalPrice} onChange={e => setProductForm({...productForm, originalPrice: e.target.value})} className="w-full bg-slate-50/50 border border-slate-100 rounded-xl py-3 px-4 text-sm" placeholder="0.00" />
+                          <label className="text-[13px] font-bold text-[var(--text-main)]">Original Price (₹)</label>
+                          <input type="number" value={productForm.originalPrice} onChange={e => setProductForm({ ...productForm, originalPrice: e.target.value })} className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-xl py-3 px-4 text-sm" placeholder="0.00" />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <label className="text-[13px] font-bold text-slate-700">Stock Units <span className="text-red-500">*</span></label>
-                          <input required type="number" value={productForm.stock} onChange={e => setProductForm({...productForm, stock: e.target.value})} className="w-full bg-slate-50/50 border border-slate-100 rounded-xl py-3 px-4 text-sm" />
+                          <label className="text-[13px] font-bold text-[var(--text-main)]">Stock Units <span className="text-red-500">*</span></label>
+                          <input required type="number" value={productForm.stock} onChange={e => setProductForm({ ...productForm, stock: e.target.value })} className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-xl py-3 px-4 text-sm" />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[13px] font-bold text-slate-700">Warranty</label>
-                          <input type="text" value={productForm.warranty} onChange={e => setProductForm({...productForm, warranty: e.target.value})} className="w-full bg-slate-50/50 border border-slate-100 rounded-xl py-3 px-4 text-sm" placeholder="e.g. 2 Year Warranty" />
+                          <label className="text-[13px] font-bold text-[var(--text-main)]">Warranty</label>
+                          <input type="text" value={productForm.warranty} onChange={e => setProductForm({ ...productForm, warranty: e.target.value })} className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-xl py-3 px-4 text-sm" placeholder="e.g. 2 Year Warranty" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[13px] font-bold text-[var(--text-main)]">Physical Size</label>
+                          <input type="text" value={productForm.dimensions.value} onChange={e => setProductForm({ ...productForm, dimensions: { ...productForm.dimensions, value: e.target.value } })} className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-xl py-3 px-4 text-sm" placeholder="e.g. 150x200" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[13px] font-bold text-[var(--text-main)]">Unit</label>
+                          <select value={productForm.dimensions.unit} onChange={e => setProductForm({ ...productForm, dimensions: { ...productForm.dimensions, unit: e.target.value } })} className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-xl py-3 px-4 text-sm">
+                            <option value="mm">Millimeters (mm)</option>
+                            <option value="cm">Centimeters (cm)</option>
+                            <option value="inches">Inches (in)</option>
+                          </select>
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[13px] font-bold text-slate-700">Delivery Information</label>
-                        <input type="text" value={productForm.deliveryInfo} onChange={e => setProductForm({...productForm, deliveryInfo: e.target.value})} className="w-full bg-slate-50/50 border border-slate-100 rounded-xl py-3 px-4 text-sm" placeholder="e.g. Ships in 2-3 days" />
+                        <label className="text-[13px] font-bold text-[var(--text-main)]">Delivery Information</label>
+                        <input type="text" value={productForm.deliveryInfo} onChange={e => setProductForm({ ...productForm, deliveryInfo: e.target.value })} className="w-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-xl py-3 px-4 text-sm" placeholder="e.g. Ships in 2-3 days" />
                       </div>
                     </motion.div>
                   )}
 
                   {currentStep === 3 && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                      <div className="p-12 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center bg-slate-50/30 group hover:border-primary transition-colors">
-                        <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center mb-4">
-                          <Upload size={20} className="text-slate-400 group-hover:text-primary transition-colors" />
+                      <div className="p-12 border-2 border-dashed border-[var(--border-subtle)] rounded-2xl flex flex-col items-center justify-center bg-[var(--bg-primary)]/30 group hover:border-primary transition-colors">
+                        <div className="w-12 h-12 bg-[var(--bg-secondary)] rounded-full shadow-sm flex items-center justify-center mb-4">
+                          <Upload size={20} className="text-[var(--text-muted)] group-hover:text-primary transition-colors" />
                         </div>
-                        <p className="text-sm font-medium text-slate-700 mb-1">Select files or drag and drop here</p>
-                        <p className="text-xs text-slate-400 mb-6">JPG, PNG or WEBP, max 5 images</p>
-                        <label className="px-6 py-2 bg-white border border-slate-200 rounded-lg text-[13px] font-bold text-slate-700 cursor-pointer hover:bg-slate-50 transition-colors shadow-sm">
+                        <p className="text-sm font-medium text-[var(--text-main)] mb-1">Select files or drag and drop here</p>
+                        <p className="text-xs text-[var(--text-muted)] mb-6">JPG, PNG or WEBP, max 5 images</p>
+                        <label className="px-6 py-2 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-lg text-[13px] font-bold text-[var(--text-main)] cursor-pointer hover:bg-[var(--bg-primary)] transition-colors shadow-sm">
                           Browse files
                           <input type="file" multiple hidden onChange={handleImageChange} accept="image/*" />
                         </label>
@@ -1170,9 +1086,9 @@ export default function AdminPanel() {
                                 // If it's a hex without #, add it
                                 if (/^[0-9A-F]{6}$/i.test(val)) {
                                   const name = await fetchColorName(val);
-                                  setProductForm({...productForm, colors: [...productForm.colors, `${name} (#${val})`]});
+                                  setProductForm({ ...productForm, colors: [...productForm.colors, `${name} (#${val})`] });
                                 } else {
-                                  setProductForm({...productForm, colors: [...productForm.colors, val]});
+                                  setProductForm({ ...productForm, colors: [...productForm.colors, val] });
                                 }
                                 input.value = '';
                               }
@@ -1182,12 +1098,12 @@ export default function AdminPanel() {
                             const input = document.querySelector('input[placeholder="Add color name or Hex (909590)"]') as HTMLInputElement;
                             const val = input.value.trim();
                             if (val) {
-                               if (/^[0-9A-F]{6}$/i.test(val)) {
-                                  const name = await fetchColorName(val);
-                                  setProductForm({...productForm, colors: [...productForm.colors, `${name} (#${val})`]});
-                                } else {
-                                  setProductForm({...productForm, colors: [...productForm.colors, val]});
-                                }
+                              if (/^[0-9A-F]{6}$/i.test(val)) {
+                                const name = await fetchColorName(val);
+                                setProductForm({ ...productForm, colors: [...productForm.colors, `${name} (#${val})`] });
+                              } else {
+                                setProductForm({ ...productForm, colors: [...productForm.colors, val] });
+                              }
                               input.value = '';
                             }
                           }} className="p-3 bg-slate-50 text-slate-400 hover:text-primary rounded-xl border border-slate-100"><Plus size={20} /></button>
@@ -1196,16 +1112,16 @@ export default function AdminPanel() {
                           {productForm.colors.map((color, i) => (
                             <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-full text-xs font-bold text-slate-700 group hover:bg-white hover:border-primary/30 transition-all">
                               {/* Color Preview Circle */}
-                              <div 
-                                className="w-3 h-3 rounded-full border border-slate-200" 
-                                style={{ 
-                                  backgroundColor: color.includes('(#') 
+                              <div
+                                className="w-3 h-3 rounded-full border border-slate-200"
+                                style={{
+                                  backgroundColor: color.includes('(#')
                                     ? color.match(/\(#([0-9A-F]{6})\)/i)?.[1] ? `#${color.match(/\(#([0-9A-F]{6})\)/i)?.[1]}` : color
-                                    : (color.startsWith('#') ? color : `#${color}`) 
-                                }} 
+                                    : (color.startsWith('#') ? color : `#${color}`)
+                                }}
                               />
                               <span>{color}</span>
-                              <button type="button" onClick={() => setProductForm({...productForm, colors: productForm.colors.filter((_, idx) => idx !== i)})} className="text-slate-300 hover:text-red-500"><X size={14} /></button>
+                              <button type="button" onClick={() => setProductForm({ ...productForm, colors: productForm.colors.filter((_, idx) => idx !== i) })} className="text-slate-300 hover:text-red-500"><X size={14} /></button>
                             </div>
                           ))}
                         </div>
@@ -1214,7 +1130,7 @@ export default function AdminPanel() {
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <label className="text-[13px] font-bold text-slate-700">Specifications</label>
-                          <button type="button" onClick={() => setProductForm({...productForm, specs: [...productForm.specs, { key: '', value: '' }]})} className="text-xs font-bold text-primary">+ Add field</button>
+                          <button type="button" onClick={() => setProductForm({ ...productForm, specs: [...productForm.specs, { key: '', value: '' }] })} className="text-xs font-bold text-primary">+ Add field</button>
                         </div>
                         <div className="space-y-3">
                           {productForm.specs.map((spec, i) => (
@@ -1222,21 +1138,21 @@ export default function AdminPanel() {
                               <input type="text" placeholder="Key" value={spec.key} onChange={(e) => {
                                 const newSpecs = [...productForm.specs];
                                 newSpecs[i].key = e.target.value;
-                                setProductForm({...productForm, specs: newSpecs});
+                                setProductForm({ ...productForm, specs: newSpecs });
                               }} className="flex-1 bg-slate-50/50 border border-slate-100 rounded-xl py-2.5 px-4 text-sm" />
                               <input type="text" placeholder="Value" value={spec.value} onChange={(e) => {
                                 const newSpecs = [...productForm.specs];
                                 newSpecs[i].value = e.target.value;
-                                setProductForm({...productForm, specs: newSpecs});
+                                setProductForm({ ...productForm, specs: newSpecs });
                               }} className="flex-1 bg-slate-50/50 border border-slate-100 rounded-xl py-2.5 px-4 text-sm" />
-                              <button onClick={() => setProductForm({...productForm, specs: productForm.specs.filter((_, idx) => idx !== i)})} className="p-2 text-slate-300 hover:text-red-500"><Trash2 size={16} /></button>
+                              <button onClick={() => setProductForm({ ...productForm, specs: productForm.specs.filter((_, idx) => idx !== i) })} className="p-2 text-slate-300 hover:text-red-500"><Trash2 size={16} /></button>
                             </div>
                           ))}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3 p-4 bg-slate-50/50 rounded-2xl">
-                        <input type="checkbox" checked={productForm.featured} onChange={e => setProductForm({...productForm, featured: e.target.checked})} className="w-4 h-4 accent-primary" id="featured-check" />
+                        <input type="checkbox" checked={productForm.featured} onChange={e => setProductForm({ ...productForm, featured: e.target.checked })} className="w-4 h-4 accent-primary" id="featured-check" />
                         <label htmlFor="featured-check" className="text-sm font-medium text-slate-700 cursor-pointer">Promote this product to featured collection</label>
                       </div>
                     </motion.div>
@@ -1245,17 +1161,17 @@ export default function AdminPanel() {
               </div>
 
               {/* Reference Style Footer */}
-              <div className="px-10 py-6 bg-white border-t border-slate-100 flex items-center justify-end gap-3">
-                <button 
+              <div className="px-10 py-6 bg-[var(--bg-secondary)] border-t border-[var(--border-subtle)] flex items-center justify-end gap-3">
+                <button
                   onClick={currentStep === 1 ? () => setIsProductModalOpen(false) : () => setCurrentStep(prev => prev - 1)}
-                  className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-[13px] font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
+                  className="px-6 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-xl text-[13px] font-bold text-[var(--text-main)] hover:bg-[var(--bg-primary)] transition-all shadow-sm"
                 >
                   {currentStep === 1 ? 'Cancel' : 'Back'}
                 </button>
-                <button 
+                <button
                   onClick={currentStep < 4 ? () => setCurrentStep(prev => prev + 1) : handleProductSubmit}
                   disabled={isSubmitting || (currentStep === 3 && !editingProductId && productImages.length < 3)}
-                  className="px-8 py-2.5 bg-slate-900 text-white rounded-xl text-[13px] font-bold hover:bg-primary transition-all shadow-md flex items-center gap-2"
+                  className="px-8 py-2.5 bg-primary text-white rounded-xl text-[13px] font-bold hover:bg-orange-600 transition-all shadow-md flex items-center gap-2"
                 >
                   {isSubmitting ? <RefreshCcw className="animate-spin" size={16} /> : (currentStep === 4 ? <CheckCircle2 size={16} /> : null)}
                   {currentStep < 4 ? 'Continue' : (isSubmitting ? 'Saving...' : 'Save product')}
@@ -1271,9 +1187,9 @@ export default function AdminPanel() {
         {isCollegeProjectModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsCollegeProjectModalOpen(false)} className="fixed inset-0 bg-slate-900/40 backdrop-blur-md" />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-              animate={{ opacity: 1, scale: 1, y: 0 }} 
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="relative w-full max-w-xl bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh] border border-slate-100"
             >
@@ -1287,7 +1203,7 @@ export default function AdminPanel() {
                   </div>
                   <button onClick={() => setIsCollegeProjectModalOpen(false)} className="p-2 text-slate-300 hover:text-slate-900 transition-colors"><X size={20} /></button>
                 </div>
-                
+
                 {/* Progress Bar */}
                 <div className="flex items-center gap-2 mb-2">
                   {[1, 2, 3, 4].map(s => (
@@ -1302,21 +1218,21 @@ export default function AdminPanel() {
                   {currentStep === 1 && (
                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
                       <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Project Name</label>
-                        <input className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:bg-white focus:border-primary outline-none transition-all" placeholder="e.g. Spider-Bot Chassis Kit" value={collegeProjectForm.name} onChange={e => setCollegeProjectForm({...collegeProjectForm, name: e.target.value})} />
+                        <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Project Name</label>
+                        <input className="w-full p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-xl text-sm focus:bg-[var(--bg-secondary)] focus:border-primary outline-none transition-all" placeholder="e.g. Spider-Bot Chassis Kit" value={collegeProjectForm.name} onChange={e => setCollegeProjectForm({ ...collegeProjectForm, name: e.target.value })} />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Short Tagline</label>
-                        <input className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:bg-white focus:border-primary outline-none transition-all" placeholder="e.g. Gesture Controlled Autonomous Robot" value={collegeProjectForm.tagline} onChange={e => setCollegeProjectForm({...collegeProjectForm, tagline: e.target.value})} />
+                        <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Short Tagline</label>
+                        <input className="w-full p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-xl text-sm focus:bg-[var(--bg-secondary)] focus:border-primary outline-none transition-all" placeholder="e.g. Gesture Controlled Autonomous Robot" value={collegeProjectForm.tagline} onChange={e => setCollegeProjectForm({ ...collegeProjectForm, tagline: e.target.value })} />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Price (₹)</label>
-                          <input type="number" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:bg-white focus:border-primary outline-none transition-all" placeholder="15999" value={collegeProjectForm.price} onChange={e => setCollegeProjectForm({...collegeProjectForm, price: e.target.value})} />
+                          <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Price (₹)</label>
+                          <input type="number" className="w-full p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-xl text-sm focus:bg-[var(--bg-secondary)] focus:border-primary outline-none transition-all" placeholder="15999" value={collegeProjectForm.price} onChange={e => setCollegeProjectForm({ ...collegeProjectForm, price: e.target.value })} />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Difficulty</label>
-                          <select className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:bg-white focus:border-primary outline-none transition-all" value={collegeProjectForm.difficultyLevel} onChange={e => setCollegeProjectForm({...collegeProjectForm, difficultyLevel: e.target.value})}>
+                          <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Difficulty</label>
+                          <select className="w-full p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-xl text-sm focus:bg-[var(--bg-secondary)] focus:border-primary outline-none transition-all" value={collegeProjectForm.difficultyLevel} onChange={e => setCollegeProjectForm({ ...collegeProjectForm, difficultyLevel: e.target.value })}>
                             <option value="Beginner">Beginner</option>
                             <option value="Intermediate">Intermediate</option>
                             <option value="Advanced">Advanced</option>
@@ -1324,8 +1240,8 @@ export default function AdminPanel() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Detailed Description</label>
-                        <textarea className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:bg-white focus:border-primary outline-none transition-all min-h-[100px] resize-none" placeholder="Provide a detailed overview of the project, features and academic value..." value={collegeProjectForm.description} onChange={e => setCollegeProjectForm({...collegeProjectForm, description: e.target.value})} />
+                        <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Detailed Description</label>
+                        <textarea className="w-full p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-xl text-sm focus:bg-[var(--bg-secondary)] focus:border-primary outline-none transition-all min-h-[100px] resize-none" placeholder="Provide a detailed overview of the project, features and academic value..." value={collegeProjectForm.description} onChange={e => setCollegeProjectForm({ ...collegeProjectForm, description: e.target.value })} />
                       </div>
                     </motion.div>
                   )}
@@ -1335,18 +1251,18 @@ export default function AdminPanel() {
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
                           <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">What You Will Get</label>
-                          <button type="button" onClick={() => setCollegeProjectForm({...collegeProjectForm, whatYouWillGet: [...collegeProjectForm.whatYouWillGet, '']})} className="text-[11px] font-black text-primary uppercase">+ Add Item</button>
+                          <button type="button" onClick={() => setCollegeProjectForm({ ...collegeProjectForm, whatYouWillGet: [...collegeProjectForm.whatYouWillGet, ''] })} className="text-[11px] font-black text-primary uppercase">+ Add Item</button>
                         </div>
                         {collegeProjectForm.whatYouWillGet.map((val, i) => (
                           <div key={i} className="flex gap-2">
                             <input className="flex-1 p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm" placeholder="e.g. Complete Hardware Kit / Source Code" value={val} onChange={e => {
                               const newArr = [...collegeProjectForm.whatYouWillGet];
                               newArr[i] = e.target.value;
-                              setCollegeProjectForm({...collegeProjectForm, whatYouWillGet: newArr});
+                              setCollegeProjectForm({ ...collegeProjectForm, whatYouWillGet: newArr });
                             }} />
                             <button type="button" onClick={() => {
                               const newArr = collegeProjectForm.whatYouWillGet.filter((_, idx) => idx !== i);
-                              setCollegeProjectForm({...collegeProjectForm, whatYouWillGet: newArr.length ? newArr : ['']});
+                              setCollegeProjectForm({ ...collegeProjectForm, whatYouWillGet: newArr.length ? newArr : [''] });
                             }} className="p-3 text-slate-300 hover:text-red-500"><Trash2 size={16} /></button>
                           </div>
                         ))}
@@ -1355,18 +1271,18 @@ export default function AdminPanel() {
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
                           <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Use Cases</label>
-                          <button type="button" onClick={() => setCollegeProjectForm({...collegeProjectForm, useCases: [...collegeProjectForm.useCases, '']})} className="text-[11px] font-black text-primary uppercase">+ Add Item</button>
+                          <button type="button" onClick={() => setCollegeProjectForm({ ...collegeProjectForm, useCases: [...collegeProjectForm.useCases, ''] })} className="text-[11px] font-black text-primary uppercase">+ Add Item</button>
                         </div>
                         {collegeProjectForm.useCases.map((val, i) => (
                           <div key={i} className="flex gap-2">
                             <input className="flex-1 p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm" placeholder="e.g. Final Year Project / Mini Project" value={val} onChange={e => {
                               const newArr = [...collegeProjectForm.useCases];
                               newArr[i] = e.target.value;
-                              setCollegeProjectForm({...collegeProjectForm, useCases: newArr});
+                              setCollegeProjectForm({ ...collegeProjectForm, useCases: newArr });
                             }} />
                             <button type="button" onClick={() => {
                               const newArr = collegeProjectForm.useCases.filter((_, idx) => idx !== i);
-                              setCollegeProjectForm({...collegeProjectForm, useCases: newArr.length ? newArr : ['']});
+                              setCollegeProjectForm({ ...collegeProjectForm, useCases: newArr.length ? newArr : [''] });
                             }} className="p-3 text-slate-300 hover:text-red-500"><Trash2 size={16} /></button>
                           </div>
                         ))}
@@ -1374,7 +1290,7 @@ export default function AdminPanel() {
 
                       <div className="space-y-2">
                         <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Demo Video URL</label>
-                        <input className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm" placeholder="https://youtube.com/..." value={collegeProjectForm.demoLink} onChange={e => setCollegeProjectForm({...collegeProjectForm, demoLink: e.target.value})} />
+                        <input className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm" placeholder="https://youtube.com/..." value={collegeProjectForm.demoLink} onChange={e => setCollegeProjectForm({ ...collegeProjectForm, demoLink: e.target.value })} />
                       </div>
                     </motion.div>
                   )}
@@ -1384,18 +1300,18 @@ export default function AdminPanel() {
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
                           <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">What You Will Build</label>
-                          <button type="button" onClick={() => setCollegeProjectForm({...collegeProjectForm, whatYouWillBuild: [...collegeProjectForm.whatYouWillBuild, '']})} className="text-[11px] font-black text-primary uppercase">+ Add Step</button>
+                          <button type="button" onClick={() => setCollegeProjectForm({ ...collegeProjectForm, whatYouWillBuild: [...collegeProjectForm.whatYouWillBuild, ''] })} className="text-[11px] font-black text-primary uppercase">+ Add Step</button>
                         </div>
                         {collegeProjectForm.whatYouWillBuild.map((val, i) => (
                           <div key={i} className="flex gap-2">
                             <input className="flex-1 p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm" placeholder="e.g. Autonomous Obstacle Avoidance" value={val} onChange={e => {
                               const newArr = [...collegeProjectForm.whatYouWillBuild];
                               newArr[i] = e.target.value;
-                              setCollegeProjectForm({...collegeProjectForm, whatYouWillBuild: newArr});
+                              setCollegeProjectForm({ ...collegeProjectForm, whatYouWillBuild: newArr });
                             }} />
                             <button type="button" onClick={() => {
                               const newArr = collegeProjectForm.whatYouWillBuild.filter((_, idx) => idx !== i);
-                              setCollegeProjectForm({...collegeProjectForm, whatYouWillBuild: newArr.length ? newArr : ['']});
+                              setCollegeProjectForm({ ...collegeProjectForm, whatYouWillBuild: newArr.length ? newArr : [''] });
                             }} className="p-3 text-slate-300 hover:text-red-500"><Trash2 size={16} /></button>
                           </div>
                         ))}
@@ -1404,19 +1320,19 @@ export default function AdminPanel() {
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
                           <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tech Stack</label>
-                          <button type="button" onClick={() => setCollegeProjectForm({...collegeProjectForm, techStack: [...collegeProjectForm.techStack, { key: '', value: '' }]})} className="text-[11px] font-black text-primary uppercase">+ Add Field</button>
+                          <button type="button" onClick={() => setCollegeProjectForm({ ...collegeProjectForm, techStack: [...collegeProjectForm.techStack, { key: '', value: '' }] })} className="text-[11px] font-black text-primary uppercase">+ Add Field</button>
                         </div>
                         {collegeProjectForm.techStack.map((tech, i) => (
                           <div key={i} className="flex gap-2">
                             <input placeholder="Core" className="w-1/3 p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm" value={tech.key} onChange={e => {
                               const newTech = [...collegeProjectForm.techStack];
                               newTech[i].key = e.target.value;
-                              setCollegeProjectForm({...collegeProjectForm, techStack: newTech});
+                              setCollegeProjectForm({ ...collegeProjectForm, techStack: newTech });
                             }} />
                             <input placeholder="e.g. Arduino Uno" className="flex-1 p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm" value={tech.value} onChange={e => {
                               const newTech = [...collegeProjectForm.techStack];
                               newTech[i].value = e.target.value;
-                              setCollegeProjectForm({...collegeProjectForm, techStack: newTech});
+                              setCollegeProjectForm({ ...collegeProjectForm, techStack: newTech });
                             }} />
                           </div>
                         ))}
@@ -1425,18 +1341,18 @@ export default function AdminPanel() {
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
                           <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Support Perks</label>
-                          <button type="button" onClick={() => setCollegeProjectForm({...collegeProjectForm, supportDetails: [...collegeProjectForm.supportDetails, '']})} className="text-[11px] font-black text-primary uppercase">+ Add Perk</button>
+                          <button type="button" onClick={() => setCollegeProjectForm({ ...collegeProjectForm, supportDetails: [...collegeProjectForm.supportDetails, ''] })} className="text-[11px] font-black text-primary uppercase">+ Add Perk</button>
                         </div>
                         {collegeProjectForm.supportDetails.map((val, i) => (
                           <div key={i} className="flex gap-2">
                             <input className="flex-1 p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm" placeholder="e.g. 1:1 WhatsApp Debugging" value={val} onChange={e => {
                               const newArr = [...collegeProjectForm.supportDetails];
                               newArr[i] = e.target.value;
-                              setCollegeProjectForm({...collegeProjectForm, supportDetails: newArr});
+                              setCollegeProjectForm({ ...collegeProjectForm, supportDetails: newArr });
                             }} />
                             <button type="button" onClick={() => {
                               const newArr = collegeProjectForm.supportDetails.filter((_, idx) => idx !== i);
-                              setCollegeProjectForm({...collegeProjectForm, supportDetails: newArr.length ? newArr : ['']});
+                              setCollegeProjectForm({ ...collegeProjectForm, supportDetails: newArr.length ? newArr : [''] });
                             }} className="p-3 text-slate-300 hover:text-red-500"><Trash2 size={16} /></button>
                           </div>
                         ))}
@@ -1468,17 +1384,17 @@ export default function AdminPanel() {
                 </form>
               </div>
 
-              <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
-                <button 
+              <div className="px-8 py-5 bg-[var(--bg-secondary)] border-t border-[var(--border-subtle)] flex justify-between items-center">
+                <button
                   onClick={currentStep === 1 ? () => setIsCollegeProjectModalOpen(false) : () => setCurrentStep(prev => prev - 1)}
-                  className="px-6 py-3 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors"
+                  className="px-6 py-3 text-sm font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
                 >
                   {currentStep === 1 ? 'Cancel' : 'Previous'}
                 </button>
-                <button 
+                <button
                   onClick={currentStep < 4 ? () => setCurrentStep(prev => prev + 1) : handleCollegeProjectSubmit}
                   disabled={isSubmitting}
-                  className="px-8 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-primary transition-all shadow-lg flex items-center gap-2"
+                  className="px-8 py-3 bg-primary text-white rounded-xl text-sm font-bold hover:bg-orange-600 transition-all shadow-lg flex items-center gap-2"
                 >
                   {isSubmitting ? <RefreshCcw className="animate-spin" size={16} /> : null}
                   {currentStep < 4 ? 'Next Step' : (isSubmitting ? 'Syncing...' : 'Publish Project')}
@@ -1496,20 +1412,20 @@ export default function AdminPanel() {
         {isDetailsModalOpen && selectedUser && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsDetailsModalOpen(false)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl overflow-y-auto max-h-[90vh] p-8">
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-[40px] shadow-2xl overflow-y-auto max-h-[90vh] p-8">
               <div className="flex flex-col items-center text-center mb-8">
                 <div className="w-24 h-24 rounded-[32px] bg-gradient-to-br from-primary to-orange-500 p-1 mb-6">
-                  <div className="w-full h-full bg-white rounded-[28px] overflow-hidden flex items-center justify-center text-3xl font-black text-primary">
+                  <div className="w-full h-full bg-[var(--bg-secondary)] rounded-[28px] overflow-hidden flex items-center justify-center text-3xl font-black text-primary">
                     {selectedUser.avatar ? <img src={selectedUser.avatar} className="w-full h-full object-cover" /> : <span>{selectedUser.name.charAt(0).toUpperCase()}</span>}
                   </div>
                 </div>
-                <h3 className="text-2xl font-black text-slate-900 mb-1">{selectedUser.name}</h3>
-                <p className="text-slate-500 font-medium mb-4">{selectedUser.email}</p>
-                <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl text-[10px] font-bold text-slate-400 uppercase">
+                <h3 className="text-2xl font-black text-[var(--text-main)] mb-1">{selectedUser.name}</h3>
+                <p className="text-[var(--text-muted)] font-medium mb-4">{selectedUser.email}</p>
+                <div className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-primary)] rounded-xl text-[10px] font-bold text-[var(--text-muted)] uppercase">
                   <Calendar size={14} /> Joined {new Date(selectedUser.createdAt).toLocaleDateString()}
                 </div>
               </div>
-              
+
               <div className="space-y-4 mb-8">
                 {/* Referrals */}
                 {((selectedUser as any).referralCode || (selectedUser as any).referredBy) && (
@@ -1557,7 +1473,7 @@ export default function AdminPanel() {
                   {(selectedUser as any).lastLocation?.lat && (selectedUser as any).lastLocation.lat !== 0 ? (
                     <>
                       {/* Live Leaflet Map */}
-                      <MapView 
+                      <MapView
                         lat={(selectedUser as any).lastLocation.lat}
                         lng={(selectedUser as any).lastLocation.lng}
                         label={selectedUser.name}
@@ -1576,9 +1492,9 @@ export default function AdminPanel() {
                       {(selectedUser as any).lastLocation.address && (
                         <p className="text-xs text-slate-500 font-medium">📍 {(selectedUser as any).lastLocation.address}, {(selectedUser as any).lastLocation.city}</p>
                       )}
-                      <a 
+                      <a
                         href={`https://www.google.com/maps?q=${(selectedUser as any).lastLocation.lat},${(selectedUser as any).lastLocation.lng}`}
-                        target="_blank" 
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 w-full py-2.5 bg-primary/10 text-primary rounded-xl text-[10px] font-black uppercase tracking-widest justify-center hover:bg-primary/20 transition-all"
                       >
@@ -1590,7 +1506,7 @@ export default function AdminPanel() {
                   )}
                 </div>
               </div>
-              <button onClick={() => setIsDetailsModalOpen(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold shadow-xl shadow-slate-900/20">
+              <button onClick={() => setIsDetailsModalOpen(false)} className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-xl shadow-primary/20">
                 Close Profile
               </button>
             </motion.div>
@@ -1603,10 +1519,10 @@ export default function AdminPanel() {
         {isCouponModalOpen && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsCouponModalOpen(false)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }} 
-              animate={{ opacity: 1, scale: 1, y: 0 }} 
-              exit={{ opacity: 0, scale: 0.9, y: 20 }} 
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="relative w-full max-w-md bg-white rounded-[40px] shadow-2xl overflow-hidden p-8 border border-slate-100"
             >
               <div className="flex items-center justify-between mb-8">
@@ -1619,13 +1535,13 @@ export default function AdminPanel() {
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Coupon Code</label>
                   <div className="relative">
                     <Ticket className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                    <input 
-                      required 
-                      type="text" 
-                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-primary outline-none uppercase" 
+                    <input
+                      required
+                      type="text"
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-primary outline-none uppercase"
                       placeholder="e.g. BISONIX50"
                       value={couponForm.code}
-                      onChange={e => setCouponForm({...couponForm, code: e.target.value})}
+                      onChange={e => setCouponForm({ ...couponForm, code: e.target.value })}
                     />
                   </div>
                 </div>
@@ -1634,13 +1550,13 @@ export default function AdminPanel() {
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Discount Amount (₹)</label>
                   <div className="relative">
                     <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                    <input 
-                      required 
-                      type="number" 
-                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-primary outline-none" 
+                    <input
+                      required
+                      type="number"
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-primary outline-none"
                       placeholder="500"
                       value={couponForm.discountAmount}
-                      onChange={e => setCouponForm({...couponForm, discountAmount: e.target.value})}
+                      onChange={e => setCouponForm({ ...couponForm, discountAmount: e.target.value })}
                     />
                   </div>
                 </div>
@@ -1649,12 +1565,12 @@ export default function AdminPanel() {
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Expiry Date</label>
                   <div className="relative">
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                    <input 
-                      required 
-                      type="date" 
-                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-primary outline-none" 
+                    <input
+                      required
+                      type="date"
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-primary outline-none"
                       value={couponForm.expiryDate}
-                      onChange={e => setCouponForm({...couponForm, expiryDate: e.target.value})}
+                      onChange={e => setCouponForm({ ...couponForm, expiryDate: e.target.value })}
                     />
                   </div>
                 </div>
@@ -1662,16 +1578,16 @@ export default function AdminPanel() {
                 <div className="space-y-4">
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Target Audience</label>
                   <div className="flex gap-4">
-                    <button 
+                    <button
                       type="button"
-                      onClick={() => setCouponForm({...couponForm, isAllUsers: true, targetUser: ''})}
+                      onClick={() => setCouponForm({ ...couponForm, isAllUsers: true, targetUser: '' })}
                       className={`flex-1 py-3 rounded-xl text-xs font-bold border transition-all ${couponForm.isAllUsers ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-white'}`}
                     >
                       All Users
                     </button>
-                    <button 
+                    <button
                       type="button"
-                      onClick={() => setCouponForm({...couponForm, isAllUsers: false})}
+                      onClick={() => setCouponForm({ ...couponForm, isAllUsers: false })}
                       className={`flex-1 py-3 rounded-xl text-xs font-bold border transition-all ${!couponForm.isAllUsers ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-white'}`}
                     >
                       Specific User
@@ -1682,28 +1598,28 @@ export default function AdminPanel() {
                     <div className="space-y-4">
                       <div className="relative">
                         <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           placeholder="Search by name or email..."
                           className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:bg-white focus:border-primary outline-none"
                           value={userSearchQuery}
                           onChange={(e) => setUserSearchQuery(e.target.value)}
                         />
                       </div>
-                      
+
                       <div className="max-h-48 overflow-y-auto space-y-1.5 custom-scrollbar p-1">
                         {users
-                          .filter(u => 
-                            u.name.toLowerCase().includes(userSearchQuery.toLowerCase()) || 
+                          .filter(u =>
+                            u.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
                             u.email.toLowerCase().includes(userSearchQuery.toLowerCase())
                           )
                           .map(u => (
-                            <div 
-                              key={u._id} 
+                            <div
+                              key={u._id}
                               className={`flex items-center gap-3 p-2.5 rounded-2xl border transition-all cursor-pointer ${couponForm.targetUser === u._id ? 'border-primary bg-primary/5 shadow-sm' : 'border-slate-100 hover:bg-slate-50'}`}
-                              onClick={() => setCouponForm({...couponForm, targetUser: u._id})}
+                              onClick={() => setCouponForm({ ...couponForm, targetUser: u._id })}
                             >
-                              <div 
+                              <div
                                 className="w-9 h-9 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center text-slate-500 font-bold hover:scale-110 transition-transform relative group/avatar"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1717,8 +1633,8 @@ export default function AdminPanel() {
                                 </div>
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-slate-900 truncate">{u.name}</p>
-                                <p className="text-[10px] text-slate-400 truncate">{u.email}</p>
+                                <p className="text-sm font-bold text-[var(--text-main)] truncate">{u.name}</p>
+                                <p className="text-[10px] text-[var(--text-muted)] truncate">{u.email}</p>
                               </div>
                               {couponForm.targetUser === u._id && <CheckCircle2 className="text-primary" size={18} />}
                             </div>
@@ -1728,9 +1644,9 @@ export default function AdminPanel() {
                   )}
                 </div>
 
-                <button 
+                <button
                   disabled={isSubmitting}
-                  className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-2"
+                  className="w-full py-5 bg-primary text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? <RefreshCcw size={18} className="animate-spin" /> : <Ticket size={18} />}
                   {isSubmitting ? 'Generating...' : 'Generate Coupon'}
@@ -1745,21 +1661,21 @@ export default function AdminPanel() {
       <AnimatePresence>
         {selectedOrder && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedOrder(null)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-md bg-white rounded-[40px] shadow-2xl p-8 border border-slate-100 max-h-[90vh] overflow-y-auto">
-              <h3 className="text-2xl font-black text-slate-900 mb-2 flex items-center gap-3">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedOrder(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-md bg-[var(--bg-secondary)] rounded-[40px] shadow-2xl p-8 border border-[var(--border-subtle)] max-h-[90vh] overflow-y-auto">
+              <h3 className="text-2xl font-black text-[var(--text-main)] mb-2 flex items-center gap-3">
                 <Truck className="text-primary" /> Update Tracking
               </h3>
               <p className="text-xs text-slate-400 mb-6">Order #{selectedOrder.orderId}</p>
 
               {/* Order Items */}
-              <div className="space-y-3 mb-6 pb-6 border-b border-slate-50">
+              <div className="space-y-3 mb-6 pb-6 border-b border-[var(--border-subtle)]">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Items Ordered</p>
                 {selectedOrder.items?.map((item: any, i: number) => (
-                  <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl">
+                  <div key={i} className="flex items-center gap-3 p-3 bg-[var(--bg-primary)] rounded-2xl">
                     {item.image && <img src={item.image} className="w-12 h-12 rounded-xl object-cover shrink-0" alt={item.name} />}
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm text-slate-900 truncate">{item.name}</p>
+                      <p className="font-bold text-sm text-[var(--text-main)] truncate">{item.name}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         {item.color && (
                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
@@ -1782,10 +1698,10 @@ export default function AdminPanel() {
               <div className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">New Status</label>
-                  <select 
-                    className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none"
+                  <select
+                    className="w-full p-4 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-2xl text-sm font-bold outline-none"
                     value={trackingUpdate.status}
-                    onChange={e => setTrackingUpdate({...trackingUpdate, status: e.target.value})}
+                    onChange={e => setTrackingUpdate({ ...trackingUpdate, status: e.target.value })}
                   >
                     <option value="Processing">Processing</option>
                     <option value="Shipped">Shipped</option>
@@ -1794,28 +1710,28 @@ export default function AdminPanel() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Current Location</label>
-                  <input 
-                    type="text" 
-                    className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none"
+                  <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Current Location</label>
+                  <input
+                    type="text"
+                    className="w-full p-4 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-2xl text-sm font-bold outline-none"
                     placeholder="e.g. Hyderabad Hub"
                     value={trackingUpdate.location}
-                    onChange={e => setTrackingUpdate({...trackingUpdate, location: e.target.value})}
+                    onChange={e => setTrackingUpdate({ ...trackingUpdate, location: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Tracking Info</label>
-                  <input 
-                    type="text" 
-                    className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none"
+                  <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Tracking Info</label>
+                  <input
+                    type="text"
+                    className="w-full p-4 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-main)] rounded-2xl text-sm font-bold outline-none"
                     placeholder="e.g. In transit to destination"
                     value={trackingUpdate.description}
-                    onChange={e => setTrackingUpdate({...trackingUpdate, description: e.target.value})}
+                    onChange={e => setTrackingUpdate({ ...trackingUpdate, description: e.target.value })}
                   />
                 </div>
-                <button 
+                <button
                   onClick={() => updateOrderStatus(selectedOrder._id)}
-                  className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-primary transition-all"
+                  className="w-full py-5 bg-primary text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl shadow-primary/20"
                 >
                   Confirm Update
                 </button>

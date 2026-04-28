@@ -44,6 +44,14 @@ const productSchema = new mongoose.Schema({
     deliveryInfo: {
         type: String
     },
+    dimensions: {
+        value: String,
+        unit: {
+            type: String,
+            enum: ['cm', 'mm', 'inches'],
+            default: 'mm'
+        }
+    },
     colors: [{
         type: String
     }],

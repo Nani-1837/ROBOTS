@@ -1,5 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, LazyMotion, domMax } from 'framer-motion';
+import { useSEO } from './hooks/useSEO';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Features from './components/Features';
@@ -15,6 +17,8 @@ const Newsletter = lazy(() => import('./components/Newsletter'));
 const TrustSection = lazy(() => import('./components/TrustSection'));
 const FAQ = lazy(() => import('./components/FAQ'));
 import SoundEffects from './components/SoundEffects';
+import CustomCursor from './components/CustomCursor';
+import ScrollToTop from './components/ScrollToTop';
 import './index.css';
 
 // Lazy load sub-views
@@ -30,315 +34,170 @@ const CollegeProjectDetail = lazy(() => import('./components/CollegeProjectDetai
 const ProfileView = lazy(() => import('./components/ProfileView'));
 const CheckoutView = lazy(() => import('./components/CheckoutView'));
 
-
 import { useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { useCartStore } from './lib/store';
 
-type View = 'home' | 'category' | 'college-projects' | 'college-project-detail' | 'model-upload' | 'contact' | 'track-order' | 'compare' | 'product-detail' | 'admin' | 'profile' | 'checkout';
+const logo = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282208/bisonix_assets/logo.png";
+
+function Home({ setCurrentView, setActiveCategory, setSelectedProduct }: any) {
+  useSEO({
+    title: 'Home',
+    description: 'Discover BISONIX for high-performance robotics, advanced drones, RC vehicles, custom 3D models, and college tech projects. Next-gen engineering at your fingertips.',
+    keywords: 'BISONIX, Binox, robotics, drones, RC vehicles, 3D printing, 3D models, college projects, tech shop, custom robots'
+  });
+
+  return (
+    <motion.main 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.4 }}
+    >
+      <Hero setActiveCategory={setActiveCategory} />
+      <Features />
+      <Suspense fallback={<div className="h-40 animate-pulse bg-primary/5 rounded-3xl" />}>
+        <TrustSection />
+        <VersionBanner />
+        <NeuralArchitecture />
+        <Stats />
+      </Suspense>
+      <ProductGrid 
+        setActiveCategory={setActiveCategory} 
+        onProductClick={(product) => {
+          setSelectedProduct(product);
+          setCurrentView('product-detail');
+        }}
+      />
+      <Suspense fallback={<div className="h-40 animate-pulse bg-primary/5 rounded-3xl" />}>
+        <Testimonials />
+        <FAQ />
+        <Newsletter />
+      </Suspense>
+    </motion.main>
+  );
+}
 
 function App() {
-  // Initialize state from localStorage
-  const getInitialView = (): View => {
-    const saved = localStorage.getItem('currentView') as View;
-    const validViews: View[] = ['home', 'category', 'college-projects', 'college-project-detail', 'model-upload', 'contact', 'track-order', 'compare', 'product-detail', 'admin', 'profile', 'checkout'];
-    return validViews.includes(saved) ? saved : 'home';
-  };
-
-  const getInitialCategory = () => {
-    return localStorage.getItem('activeCategory') || null;
-  };
-
-  const [currentView, setCurrentView] = useState<View>(getInitialView());
-
-
-  const [activeCategory, setActiveCategory] = useState<string | null>(getInitialCategory());
-  const [selectedProduct, setSelectedProduct] = useState<null | {
-    _id: string;
-    name: string;
-    description: string;
-    price: number;
-    originalPrice?: number;
-    images: string[];
-    category: any;
-    stock: number;
-  }>(null);
-  const [selectedCollegeProject, setSelectedCollegeProject] = useState<any>(null);
-
   const { user, loading } = useAuth();
+  const { items: cartItems } = useCartStore();
   
-  const [cartItems, setCartItems] = useState<any[]>([]);
-
-  // Save changes to localStorage
-  useEffect(() => {
-    localStorage.setItem('currentView', currentView);
-    if (activeCategory) {
-      localStorage.setItem('activeCategory', activeCategory);
-    } else {
-      localStorage.removeItem('activeCategory');
-    }
-  }, [currentView, activeCategory]);
-
-  // Guard Admin Access on load
-  useEffect(() => {
-    if (!loading && currentView === 'admin' && user?.role !== 'admin') {
-      setCurrentView('home');
-    }
-  }, [user, loading, currentView]);
-
-  // Handle Category Changes - only navigate to category if user explicitly sets one
-  // (removed auto-select to avoid unintended navigation)
-
-  // Scroll to top when view changes
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [currentView, activeCategory]);
+  // These are kept for legacy compatibility during transition, but will be phased out
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedCollegeProject, setSelectedCollegeProject] = useState<any>(null);
+  
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-[var(--bg-primary)] z-[1000]">
+        <img src={logo} alt="Loading" className="h-24 w-auto animate-pulse mb-6 drop-shadow-[0_0_20px_rgba(255,106,0,0.4)]" />
+        <p className="text-xs font-bold text-primary animate-pulse tracking-widest uppercase">Initializing Core...</p>
+      </div>
+    );
+  }
 
   return (
     <ToastProvider>
-      <LazyMotion features={domMax}>
-        <div className="relative min-h-screen bg-[var(--bg-primary)] text-[var(--text-main)] selection:bg-primary/30 selection:text-[var(--text-main)] transition-colors duration-400">
-      <SoundEffects />
-      <Navbar 
-        cartItems={cartItems} 
-        setCartItems={setCartItems} 
-        setActiveCategory={setActiveCategory} 
-        setCurrentView={setCurrentView}
-        setSelectedProduct={setSelectedProduct}
-      />
-      
-      <Suspense fallback={
-        <div className="fixed inset-0 flex flex-col items-center justify-center bg-[var(--bg-primary)] z-[1000]">
-          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
-          <p className="text-xs font-bold text-primary animate-pulse tracking-widest uppercase">Initializing Core...</p>
-        </div>
-      }>
-      <AnimatePresence mode="wait">
-        {currentView === 'home' && (
-          <motion.main 
-            key="home"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.4 }}
-          >
-            <Hero setCurrentView={setCurrentView} setActiveCategory={setActiveCategory} />
-            <Features />
-            <Suspense fallback={<div className="h-40 animate-pulse bg-primary/5 rounded-3xl" />}>
-              <TrustSection />
-              <VersionBanner />
-              <NeuralArchitecture />
-              <Stats />
-            </Suspense>
-            <ProductGrid 
+      <Router>
+        <ScrollToTop />
+        <LazyMotion features={domMax}>
+          <div className="relative min-h-screen bg-[var(--bg-primary)] text-[var(--text-main)] selection:bg-primary/30 selection:text-[var(--text-main)] transition-colors duration-400">
+            <SoundEffects />
+            <CustomCursor />
+            <Navbar 
+              cartItems={cartItems} 
+              setCartItems={() => {}} 
               setActiveCategory={setActiveCategory} 
-              onProductClick={(product) => {
-                setSelectedProduct(product);
-                setCurrentView('product-detail');
-              }}
+              setSelectedProduct={setSelectedProduct}
             />
-            <Suspense fallback={<div className="h-40 animate-pulse bg-primary/5 rounded-3xl" />}>
-              <Testimonials />
-              <FAQ />
-              <Newsletter />
-            </Suspense>
-          </motion.main>
-        )}
-
-        {currentView === 'category' && activeCategory && (
-          <motion.div
-            key="category"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          >
-            <CategoryView 
-              category={activeCategory} 
-              onBack={() => { setActiveCategory(null); setCurrentView('home'); }} 
-              onProductClick={(product) => {
-
-                setSelectedProduct(product);
-                setCurrentView('product-detail');
-              }}
-            />
-          </motion.div>
-        )}
-
-        {currentView === 'college-projects' && (
-          <motion.div
-            key="college-projects"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.3 }}
-          >
-            <CollegeProjectsView 
-              onBack={() => { setActiveCategory(null); setCurrentView('home'); }} 
-              onProjectClick={(project) => {
-
-                setSelectedCollegeProject(project);
-                setCurrentView('college-project-detail');
-              }}
-            />
-
-          </motion.div>
-        )}
-
-        {currentView === 'model-upload' && (
-          <motion.div
-            key="model-upload"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.4 }}
-          >
-            <ModelUploadView onBack={() => { setActiveCategory(null); setCurrentView('home'); }} />
-          </motion.div>
-        )}
-
-        {currentView === 'contact' && (
-          <motion.div
-            key="contact"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.4 }}
-          >
-            <ContactView onBack={() => { setActiveCategory(null); setCurrentView('home'); }} />
-          </motion.div>
-        )}
-
-        {currentView === 'track-order' && (
-          <motion.div
-            key="track-order"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.4 }}
-          >
-            <TrackOrderView onBack={() => { setActiveCategory(null); setCurrentView('home'); }} />
-          </motion.div>
-        )}
-
-        {currentView === 'college-project-detail' && selectedCollegeProject && (
-          <motion.div
-            key="college-project-detail"
-            initial={{ opacity: 0, scale: 1.02 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          >
-            <CollegeProjectDetail 
-              project={selectedCollegeProject}
-              onBack={() => setCurrentView('college-projects')}
-              setCartItems={setCartItems}
-            />
-          </motion.div>
-        )}
-
-        {currentView === 'compare' && (
-
-          <motion.div
-            key="compare"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.4 }}
-          >
-            <CompareView onBack={() => { setActiveCategory(null); setCurrentView('home'); }} />
-          </motion.div>
-        )}
-
-        {currentView === 'product-detail' && selectedProduct && (
-          <motion.div
-            key="product-detail"
-            initial={{ opacity: 0, scale: 1.02 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          >
-            <ProductDetailView 
-              product={selectedProduct}
-              onBack={() => {
-                if (activeCategory) setCurrentView('category');
-                else setCurrentView('home');
-              }}
-              setCartItems={setCartItems}
-              onProductClick={(p) => {
-                setSelectedProduct(p);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
-          </motion.div>
-        )}
-
-        {currentView === 'admin' && user?.role === 'admin' && (
-          <motion.div
-            key="admin"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.4 }}
-          >
-            <AdminPanel />
-          </motion.div>
-        )}
-
-        {currentView === 'profile' && user && (
-          <motion.div
-            key="profile"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.4 }}
-          >
-            <ProfileView setCartItems={setCartItems} />
-          </motion.div>
-        )}
-
-        {currentView === 'checkout' && (
-          <motion.div
-            key="checkout"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.4 }}
-          >
-            {user ? (
-              <CheckoutView 
-                cartItems={cartItems}
-                user={user}
-                onBack={() => setCurrentView('home')}
-                onSuccess={() => {
-                  setCartItems([]);
-                  setCurrentView('profile');
-                }}
-              />
-            ) : (
-              <div className="max-w-4xl mx-auto py-32 text-center">
-                <h2 className="text-3xl font-bold mb-4">Authentication Required</h2>
-                <p className="text-[var(--text-muted)] mb-8">Please login to proceed with your order.</p>
-                <button 
-                  onClick={() => setCurrentView('home')}
-                  className="bg-primary text-white px-8 py-4 rounded-2xl font-bold"
-                >
-                  Back to Home
-                </button>
+            
+            <Suspense fallback={
+              <div className="fixed inset-0 flex flex-col items-center justify-center bg-[var(--bg-primary)] z-[1000]">
+                <img src={logo} alt="Loading" className="h-24 w-auto animate-pulse mb-6 drop-shadow-[0_0_20px_rgba(255,106,0,0.4)]" />
+                <p className="text-xs font-bold text-primary animate-pulse tracking-widest uppercase">Loading Interface...</p>
               </div>
-            )}
-          </motion.div>
-        )}
+            }>
+              <AnimatePresence mode="wait">
+                <Routes>
+                  <Route path="/" element={<Home setCurrentView={() => {}} setActiveCategory={setActiveCategory} setSelectedProduct={setSelectedProduct} />} />
+                  
+                  <Route path="/category" element={
+                    activeCategory ? (
+                      <CategoryView 
+                        category={activeCategory} 
+                        onBack={() => window.history.back()} 
+                        onProductClick={(product) => {
+                          setSelectedProduct(product);
+                          // This would ideally be /product/:id
+                        }}
+                      />
+                    ) : <Navigate to="/" />
+                  } />
 
-      </AnimatePresence>
-      </Suspense>
+                  <Route path="/college-projects" element={
+                    <CollegeProjectsView 
+                      onBack={() => window.history.back()} 
+                      onProjectClick={(project) => setSelectedCollegeProject(project)}
+                    />
+                  } />
 
-      <Suspense fallback={<div className="h-20 animate-pulse bg-primary/5" />}>
-        <Footer setCurrentView={setCurrentView} setActiveCategory={setActiveCategory} />
-      </Suspense>
-      </div>
-      </LazyMotion>
+                  <Route path="/model-upload" element={<ModelUploadView onBack={() => window.history.back()} />} />
+                  <Route path="/contact" element={<ContactView onBack={() => window.history.back()} />} />
+                  <Route path="/track-order" element={<TrackOrderView onBack={() => window.history.back()} />} />
+                  <Route path="/compare" element={<CompareView onBack={() => window.history.back()} />} />
+                  
+                  <Route path="/product-detail" element={
+                    selectedProduct ? (
+                      <ProductDetailView 
+                        product={selectedProduct}
+                        onBack={() => window.history.back()}
+                        onProductClick={setSelectedProduct}
+                      />
+                    ) : <Navigate to="/" />
+                  } />
+
+                  <Route path="/college-project-detail" element={
+                    selectedCollegeProject ? (
+                      <CollegeProjectDetail 
+                        project={selectedCollegeProject}
+                        onBack={() => window.history.back()}
+                      />
+                    ) : <Navigate to="/college-projects" />
+                  } />
+
+                  <Route path="/admin" element={
+                    user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />
+                  } />
+
+                  <Route path="/profile" element={
+                    user ? <ProfileView setCartItems={() => {}} /> : <Navigate to="/" />
+                  } />
+
+                  <Route path="/checkout" element={
+                    user ? (
+                      <CheckoutView 
+                        cartItems={cartItems}
+                        user={user}
+                        onBack={() => window.history.back()}
+                        onSuccess={() => {}}
+                      />
+                    ) : <Navigate to="/" />
+                  } />
+
+                  <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+              </AnimatePresence>
+            </Suspense>
+
+            <Suspense fallback={<div className="h-20 animate-pulse bg-primary/5" />}>
+              <Footer setActiveCategory={setActiveCategory} />
+            </Suspense>
+          </div>
+        </LazyMotion>
+      </Router>
     </ToastProvider>
   );
 }
 
 export default App;
+

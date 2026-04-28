@@ -1,15 +1,16 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Trash2, Plus, Minus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   cartItems: any[];
   setCartItems: (items: any[]) => void;
-  setCurrentView: (view: any) => void;
 }
 
-export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems, setCurrentView }: CartDrawerProps) {
+export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems }: CartDrawerProps) {
+  const navigate = useNavigate();
   const handleQtyChange = (id: number, delta: number) => {
     setCartItems(cartItems.map(item => 
       item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item
@@ -24,7 +25,7 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems, s
 
   const handleCheckout = () => {
     if (cartItems.length === 0) return;
-    setCurrentView('checkout');
+    navigate('/checkout');
     onClose();
   };
 
@@ -87,6 +88,11 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems, s
                           <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-1.5">
                             <span className="inline-block w-2.5 h-2.5 rounded-full border border-[var(--border-subtle)]" style={{ backgroundColor: item.color?.toLowerCase() === 'white' ? '#fff' : item.color?.toLowerCase() === 'black' ? '#000' : item.color }} />
                             {item.color}
+                          </p>
+                        )}
+                        {item.dimensions && item.dimensions.value && (
+                          <p className="text-[9px] font-black text-primary uppercase tracking-tighter mt-0.5">
+                            Size: {item.dimensions.value} {item.dimensions.unit}
                           </p>
                         )}
                         <p className="text-primary font-bold text-sm mt-1">₹{item.price.toLocaleString()}</p>

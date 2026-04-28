@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Users, Zap, Shield, X, Cpu } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { useNavigate } from 'react-router-dom';
 const logo = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282208/bisonix_assets/logo.png";
 
 // Custom Original Brand Icons (SVGs)
@@ -44,7 +45,8 @@ const SnapchatIcon = () => (
   </svg>
 );
 
-export default function Footer({ setCurrentView, setActiveCategory }: { setCurrentView?: (view: any) => void, setActiveCategory?: (cat: any) => void }) {
+export default function Footer({ setActiveCategory }: { setActiveCategory?: (cat: any) => void }) {
+  const navigate = useNavigate();
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -100,7 +102,7 @@ export default function Footer({ setCurrentView, setActiveCategory }: { setCurre
             <div 
               className="flex items-center gap-3 mb-6 cursor-pointer"
               onClick={() => {
-                setCurrentView?.('home');
+                navigate('/');
                 setActiveCategory?.(null);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
@@ -147,7 +149,7 @@ export default function Footer({ setCurrentView, setActiveCategory }: { setCurre
                 <li key={link.name}>
                   <button 
                     onClick={() => {
-                      setCurrentView?.('category');
+                      navigate('/category');
                       setActiveCategory?.(link.cat);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
@@ -172,7 +174,7 @@ export default function Footer({ setCurrentView, setActiveCategory }: { setCurre
                 <li key={link.name}>
                   <button 
                     onClick={() => {
-                      setCurrentView?.(link.view);
+                      navigate(`/${link.view}`);
                       setActiveCategory?.(null);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
@@ -194,7 +196,7 @@ export default function Footer({ setCurrentView, setActiveCategory }: { setCurre
                   <button 
                     onClick={() => {
                       if (link === 'Contact') {
-                        setCurrentView?.('contact');
+                        navigate('/contact');
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       } else {
                         setIsAboutOpen(true);

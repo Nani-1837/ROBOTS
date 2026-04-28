@@ -6,22 +6,24 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { useCartStore } from '../lib/store';
+
 interface CollegeProjectDetailProps {
   project: any;
   onBack: () => void;
-  setCartItems: (items: any) => void;
 }
 
-export default function CollegeProjectDetail({ project, onBack, setCartItems }: CollegeProjectDetailProps) {
+export default function CollegeProjectDetail({ project, onBack }: CollegeProjectDetailProps) {
   const [activeImage, setActiveImage] = useState(project.images?.[0] || project.image);
+  const { addItem } = useCartStore();
 
   const addToCart = () => {
-    setCartItems((prev: any) => {
-      const existing = prev.find((item: any) => item.name === project.name);
-      if (existing) {
-        return prev.map((item: any) => item.name === project.name ? { ...item, qty: item.qty + 1 } : item);
-      }
-      return [...prev, { name: project.name, price: project.price, qty: 1, image: project.images?.[0] || project.image }];
+    addItem({
+      id: project._id,
+      name: project.name,
+      price: project.price,
+      image: project.images?.[0] || project.image,
+      qty: 1
     });
   };
 

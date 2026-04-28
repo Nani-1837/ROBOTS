@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 const herosectionImage = "https://res.cloudinary.com/dqp0zkagb/image/upload/f_auto,q_auto/v1777282207/bisonix_assets/herosection.png";
 
-export default function Hero({ setCurrentView, setActiveCategory }: { setCurrentView: any, setActiveCategory: any }) {
+export default function Hero({ setActiveCategory }: { setActiveCategory: any }) {
+  const navigate = useNavigate();
   const [index, setIndex] = useState(0);
   const words = ["Robots", "Drones", "Cars", "3D Models"];
   const colors = ["#FF6B00", "#007AFF", "#8B5CF6", "#800000"];
@@ -23,7 +25,7 @@ export default function Hero({ setCurrentView, setActiveCategory }: { setCurrent
 
   const exploreAll = () => {
     setActiveCategory('All');
-    setCurrentView('category');
+    navigate('/category');
   };
 
   return (
@@ -107,14 +109,14 @@ export default function Hero({ setCurrentView, setActiveCategory }: { setCurrent
         >
           <button 
             onClick={exploreAll}
-            className="w-full sm:w-auto px-10 py-4 rounded-xl bg-primary text-white font-bold text-sm transition-all hover:bg-orange-600 shadow-xl shadow-primary/10 active:scale-95"
+            className="w-full sm:w-auto px-10 py-4 rounded-xl btn-primary font-bold text-sm shadow-xl shadow-primary/20 active:scale-95"
           >
             Explore
           </button>
           
           <button 
             onClick={scrollToAbout}
-            className="w-full sm:w-auto px-10 py-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] hover:border-[var(--text-main)]/20 text-[var(--text-main)] font-bold text-sm transition-all active:scale-95"
+            className="w-full sm:w-auto px-10 py-4 rounded-xl btn-secondary font-bold text-sm shadow-sm active:scale-95"
           >
             Watch Demo
           </button>

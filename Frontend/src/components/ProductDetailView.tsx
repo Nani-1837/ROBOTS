@@ -2,18 +2,19 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import ReviewSection from './ReviewSection';
-
+import { useSEO } from '../hooks/useSEO';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Star, ChevronRight, Check, ShieldCheck, Truck, ChevronDown, Package } from 'lucide-react';
+
+import { useCartStore } from '../lib/store';
 
 interface ProductDetailViewProps {
   product: any;
   onBack: () => void;
-  setCartItems: (items: any) => void;
   onProductClick?: (product: any) => void;
 }
 
-export default function ProductDetailView({ product, onBack, setCartItems, onProductClick }: ProductDetailViewProps) {
+export default function ProductDetailView({ product, onBack, onProductClick }: ProductDetailViewProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState('White');
   const [showDetails, setShowDetails] = useState(false);
@@ -21,7 +22,14 @@ export default function ProductDetailView({ product, onBack, setCartItems, onPro
   const [isHovering, setIsHovering] = useState(false);
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { addItem } = useCartStore();
 
+  useSEO({
+    title: product.name,
+    description: product.description || `Buy ${product.name} at BISONIX. Premium quality and engineering.`,
+    keywords: `BISONIX, Binox, ${product.name}, ${typeof product.category === 'object' ? product.category.name : product.category}, robotics`,
+    image: product.images && product.images.length > 0 ? product.images[0] : undefined
+  });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
@@ -69,26 +77,16 @@ export default function ProductDetailView({ product, onBack, setCartItems, onPro
       showToast('Please login to add items to cart 🔒', 'error');
       return;
     }
-    setCartItems((prev: any) => {
-      const existing = prev.find((item: any) => item.id === product._id || item.id === product.id);
-      if (existing) {
-        showToast(`${product.name} quantity updated!`, 'info');
-        return prev.map((item: any) => 
-          (item.id === product._id || item.id === product.id) 
-            ? { ...item, qty: item.qty + 1, color: selectedColor } 
-            : item
-        );
-      }
-      showToast(`${product.name} added to cart! 🛒`, 'success');
-      return [...prev, { 
-        id: product._id || product.id, 
-        name: product.name, 
-        price: product.price, 
-        qty: 1, 
-        image: productImages[0],
-        color: selectedColor 
-      }];
+    addItem({ 
+      id: product._id || product.id, 
+      name: product.name, 
+      price: product.price, 
+      qty: 1, 
+      image: productImages[0],
+      color: selectedColor,
+      dimensions: product.dimensions
     });
+    showToast(`${product.name} added to cart! 🛒`, 'success');
   };
 
   return (
@@ -187,6 +185,11 @@ export default function ProductDetailView({ product, onBack, setCartItems, onPro
               <span className="flex items-center gap-1 text-green-500 text-[10px] font-black uppercase tracking-widest">
                 <Check size={12} /> In Stock
               </span>
+              {product.dimensions && product.dimensions.value && (
+                <span className="px-3 py-1 bg-[var(--bg-secondary)] text-[var(--text-main)] rounded-full text-[10px] font-black uppercase tracking-widest border border-[var(--border-subtle)] flex items-center gap-1">
+                  <Package size={12} className="text-primary" /> {product.dimensions.value} {product.dimensions.unit}
+                </span>
+              )}
             </div>
 
             <h1 className="text-5xl md:text-6xl font-black font-display text-[var(--text-main)] mb-6 leading-tight">
@@ -220,8 +223,14 @@ export default function ProductDetailView({ product, onBack, setCartItems, onPro
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden"
                   >
-                    <div className="p-6 text-sm text-[var(--text-muted)] leading-relaxed bg-[var(--bg-primary)] border-x border-b border-[var(--border-subtle)] rounded-b-2xl mx-2">
-                      {productInfo}
+                    <div className="p-6 text-sm text-[var(--text-muted)] leading-relaxed bg-[var(--bg-primary)] border-x border-b border-[var(--border-subtle)] rounded-b-2xl mx-2 space-y-4">
+                      <p>{productInfo}</p>
+                      {product.dimensions && product.dimensions.value && (
+                        <div className="pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between">
+                          <span className="font-bold text-[var(--text-main)] uppercase text-[10px] tracking-widest">Physical Scale</span>
+                          <span className="font-black text-primary">{product.dimensions.value} {product.dimensions.unit}</span>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 )}

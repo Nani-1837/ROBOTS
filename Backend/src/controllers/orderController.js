@@ -16,7 +16,8 @@ export const createOrder = async (req, res) => {
       price: item.price,
       qty: item.qty || item.quantity || 1,
       image: item.image,
-      color: item.color || item.selectedColor || null
+      color: item.color || item.selectedColor || null,
+      dimensions: item.dimensions || null
     }));
 
     const order = new Order({

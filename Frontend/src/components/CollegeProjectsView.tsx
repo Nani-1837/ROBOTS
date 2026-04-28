@@ -2,6 +2,7 @@ import { API_URL } from '../config';
 import { motion } from 'framer-motion';
 import { ChevronRight, GraduationCap, ArrowUpRight, Star, RefreshCcw } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface CollegeProjectsViewProps {
   onBack: () => void;
@@ -81,6 +82,7 @@ const ProjectCard = ({ project, delay, onProjectClick }: { project: any, delay: 
 };
 
 export default function CollegeProjectsView({ onBack, onProjectClick }: CollegeProjectsViewProps) {
+  const navigate = useNavigate();
 
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +149,10 @@ export default function CollegeProjectsView({ onBack, onProjectClick }: CollegeP
                 key={project._id} 
                 project={project} 
                 delay={i * 0.1} 
-                onProjectClick={onProjectClick}
+                onProjectClick={(p) => {
+                  onProjectClick(p);
+                  navigate('/college-project-detail');
+                }}
               />
             ))}
           </div>

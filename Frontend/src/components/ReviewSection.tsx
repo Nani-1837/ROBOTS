@@ -243,7 +243,7 @@ export default function ReviewSection({ productId, user }: ReviewSectionProps) {
               <button
                 type="submit"
                 disabled={isSubmitting || !user}
-                className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-xs shadow-xl shadow-slate-900/10 hover:bg-primary transition-all active:scale-95 flex items-center justify-center gap-3 uppercase tracking-widest disabled:opacity-50 disabled:grayscale"
+                className="w-full py-5 rounded-2xl bg-primary text-black dark:text-white font-black text-xs shadow-xl shadow-primary/10 hover:brightness-110 transition-all active:scale-95 flex items-center justify-center gap-3 uppercase tracking-widest disabled:opacity-50 disabled:grayscale"
               >
                 {isSubmitting ? <ImageIcon className="animate-bounce" size={18} /> : <Send size={18} />}
                 {isSubmitting ? 'Publishing...' : 'Publish Review'}

@@ -2,31 +2,31 @@
 @import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
 @import "tailwindcss";
 
-@theme {
+:root {
   --color-primary: #FF6A00;
   --color-dark-1: #0A0A0A;
   --color-dark-2: #141414;
-  
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-display: 'Space Grotesk', system-ui, sans-serif;
-}
-
-:root {
   --bg-primary: #0A0A0A;
-  --bg-secondary: #141414;
+  --bg-secondary: #1F1F1F; /* Increased contrast for dark mode */
   --text-main: #FFFFFF;
   --text-muted: #9CA3AF;
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --card-shadow: 0 4px 30px rgba(0,0,0,0.5);
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --card-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  --glass-bg: rgba(30, 30, 30, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.15);
 }
 
 :root.light {
-  --bg-primary: #F8F9FA;
-  --bg-secondary: #FFFFFF;
-  --text-main: #0A0A0A;
-  --text-muted: #6B7280;
-  --border-subtle: rgba(0, 0, 0, 0.05);
-  --card-shadow: 0 4px 30px rgba(0,0,0,0.05);
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F3F4F6; /* Distinct gray for light mode */
+  --text-main: #111827;
+  --text-muted: #4B5563;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --card-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.05);
 }
 
 body {
@@ -37,10 +37,52 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-smoothing: grayscale;
   transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
+}
+
+/* Global Button & Interactive Element Visibility */
+button, .btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none; /* Removed surrounding boxes as requested */
+  color: inherit; /* Respect Tailwind text- classes */
+}
+
+button:hover, .btn:hover {
+  box-shadow: var(--card-shadow);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: #FFFFFF !important;
+  border: none;
+}
+
+:root.light .btn-primary {
+  color: #000000 !important;
+}
+
+.btn-secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-main);
 }
 
 /* Restore default cursor on interactive elements */
@@ -48,9 +90,19 @@ a, button, input, select, textarea, .cursor-pointer {
   cursor: pointer !important;
 }
 
-/* Micro-interactions */
+/* Premium Classes */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--card-shadow);
+}
+
 .btn-premium {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 .btn-premium:active {
   transform: scale(0.95);
@@ -58,10 +110,13 @@ a, button, input, select, textarea, .cursor-pointer {
 
 .card-premium {
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
 }
 .card-premium:hover {
   transform: translateY(-8px);
   box-shadow: 0 20px 40px -15px rgba(255, 106, 0, 0.15);
+  border-color: rgba(255, 106, 0, 0.3);
 }
 
 /* Skeleton Loader Shimmer */
@@ -90,3 +145,17 @@ img[loading] {
 img.loaded {
   opacity: 1;
 }
+
+/* Custom Cursor (Optional class to apply) */
+.custom-cursor {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-primary);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.1s ease;
+  mix-blend-mode: difference;
+}
+
